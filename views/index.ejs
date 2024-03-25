@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>grepbible WebUI</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        const BOOK2CHAPTERS = {
+                '1 Chronicles': 29,
+                '1 Corinthians': 16,
+                '1 John': 5,
+                '1 Kings': 22,
+                '1 Peter': 5,
+                '1 Samuel': 31,
+                '1 Thessalonians': 5,
+                '1 Timothy': 6,
+                '2 Chronicles': 36,
+                '2 Corinthians': 13,
+                '2 John': 1,
+                '2 Kings': 25,
+                '2 Peter': 3,
+                '2 Samuel': 24,
+                '2 Thessalonians': 3,
+                '2 Timothy': 4,
+                '3 John': 1,
+                'Acts': 28,
+                'Amos': 9,
+                'Colossians': 4,
+                'Daniel': 12,
+                'Deuteronomy': 34,
+                'Ecclesiastes': 12,
+                'Ephesians': 6,
+                'Esther': 10,
+                'Exodus': 40,
+                'Ezekiel': 48,
+                'Ezra': 10,
+                'Galatians': 6,
+                'Genesis': 50,
+                'Habakkuk': 3,
+                'Haggai': 2,
+                'Hebrews': 13,
+                'Hosea': 14,
+                'Isaiah': 66,
+                'James': 5,
+                'Jeremiah': 52,
+                'Job': 42,
+                'Joel': 3,
+                'John': 21,
+                'Jonah': 4,
+                'Joshua': 24,
+                'Jude': 1,
+                'Judges': 21,
+                'Lamentations': 5,
+                'Leviticus': 27,
+                'Luke': 24,
+                'Malachi': 4,
+                'Mark': 16,
+                'Matthew': 28,
+                'Micah': 7,
+                'Nahum': 3,
+                'Nehemiah': 13,
+                'Numbers': 36,
+                'Obadiah': 1,
+                'Philemon': 1,
+                'Philippians': 4,
+                'Proverbs': 31,
+                'Psalms': 150,
+                'Revelation': 22,
+                'Romans': 16,
+                'Ruth': 4,
+                'Song of Solomon': 8,
+                'Titus': 3,
+                'Zechariah': 14,
+                'Zephaniah': 3
+            };
+
+            function parseAndDisplayCitation(citation) {
+                $.post('/parse', { citation: citation }, function(data) {
+                    if (data.error) {
+                        console.error('Error parsing citation:', data.error);
+                        return;
+                    }
+
+                    // Ensure the book dropdown is set to the correct book
+                    $('#book').val(data.book);
+
+                    // Dynamically populate the chapter dropdown based on the book
+                    const chapterCount = BOOK2CHAPTERS[data.book] || 0; // Adding a fallback value
+                    const chapterSelect = $('#chapter').empty();
+                    chapterSelect.append('<option value="" disabled selected>Select a chapter</option>');
+                    for (let i = 1; i <= chapterCount; i++) {
+                        let selected = i.toString() === data.chapter ? ' selected' : '';
+                        chapterSelect.append(`<option value="${i}"${selected}>${i}</option>`);
+                    }
+
+                    // Handle line display; assuming 'data.lines' is an array of selected line numbers
+                    $('#line').text(data.lines && data.lines.length > 0 ? `Lines: ${data.lines.join(", ")}` : 'Select a line');
+                }, 'json');
+            }
+
+        //{ query: citationInputVal, version: versionSelected }
+        $(document).ready(function() {
+            $('#randomVerseBtn').click(function() {
+                var selectedVersion = $('#version').val();
+                $.get('/random-verse-reference', function(_data) {
+                    const reference = _data.reference;
+                    // Now use the /search API to get the quote for this reference
+                    $.post('/search', { query: reference, version: selectedVersion }, function(data) {
+                        if (data.error) {
+                            console.error('Error fetching quote:', data.error);
+                            $('#citation').text('Error fetching quote. Please try again.');
+                        } else {
+                            $('#citationInput').val(reference);
+                            parseAndDisplayCitation(reference);
+                            //updateCitation();
+                            // Display the fetched quote
+                            $('#citation').text(data.quote);
+                        }
+                        }, 'json');
+                }).fail(function() {
+                    $('#randomVerseOutput').text("Failed to fetch a random verse reference. Please try again.");
+                });
+            });
+            
+            function updateCitation() {
+                const selectedBook = $('#book').find(":selected").text();
+                const selectedChapter = $('#chapter').find(":selected").val();
+                const updatedCitation = `${selectedBook} ${selectedChapter}:1`; // Assuming verse 1 as default
+                $('#citationInput').val(updatedCitation);
+            }
+
+            // Event listeners for the book and chapter dropdowns
+            $('#book').change(function() {
+                // Update chapters dropdown based on selected book
+                const selectedBook = $(this).val();
+                const chaptersCount = BOOK2CHAPTERS[selectedBook] || 1;
+                $('#chapter').empty();
+                for (let i = 1; i <= chaptersCount; i++) {
+                    $('#chapter').append(`<option value="${i}">${i}</option>`);
+                }
+                // Update citation after changing book (and resetting chapters)
+                updateCitation();
+            });
+
+            $('#chapter').change(function() {
+                // Update citation when chapter changes
+                updateCitation();
+            });
+            
+            // Populate the book dropdown
+            const bookSelect = $('#book').append('<option value="" disabled selected></option>');
+            Object.keys(BOOK2CHAPTERS).forEach(book => {
+                bookSelect.append(`<option value="${book}">${book}</option>`);
+            });
+
+            $('#searchForm').on('submit', function(event) {
+                event.preventDefault();
+                const citationInputVal = $('#citationInput').val();
+                const versionSelected = $('#version').val();
+
+                $.post('/search', { query: citationInputVal, version: versionSelected }, function(data) {
+                    if (data.error) {
+                        console.error('Error fetching quote:', data.error);
+                        $('#citation').text('Error fetching quote. Please try again.');
+                    } else {
+                        // Display the fetched quote
+                        $('#citation').text(data.quote);
+                    }
+                }, 'json');
+            parseAndDisplayCitation(citationInputVal);
+                
+
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>grepbible WebUI</h1>
+    <div style="margin-top: 20px;">
+        <p>A WebUI for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
+    </div>
+    <hr>
+    <form id="searchForm">
+        <div>
+            <label for="version">1st version:</label>
+            <select name="version1" id="version">
+                <% bibles.forEach(function(bible) { %>
+                    <option value="<%= bible.code %>" <%= bible.code === 'kj' ? 'selected' : '' %>><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div>
+            <label for="version2">2nd version:</label>
+            <select name="version2" id="version2">
+                <option value="" selected disabled>Select a version</option>
+                <% bibles.forEach(function(bible) { %>
+                    <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div>
+            <label for="version3">3rd version:</label>
+            <select name="version3" id="version3">
+                <option value="" selected disabled>Select a version</option>
+                <% bibles.forEach(function(bible) { %>
+                    <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                <% }); %>
+            </select>
+        </div>
+        
+        <div>
+            <input type="text" id="citationInput" name="query" placeholder="quote e.g. Genesis 1:1" required/>
+        </div>
+        <button id="randomVerseBtn">Random Verse</button>
+        <div>
+            <label for="book">Book:</label>
+            <select id="book"></select>
+        </div>
+        <div>
+            <label for="chapter">Chapter:</label>
+            <select id="chapter"></select>
+        </div>
+        <div>
+            <label for="line">Line(s):</label>
+            <span id="line"></span>
+        </div>
+        <div>
+            <button type="submit">Search</button>
+        </div>
+    </form>
+    <hr>
+    <div id="citation"></div>
+</body>
+</html>
