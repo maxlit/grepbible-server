@@ -74,6 +74,19 @@
                 'Zephaniah': 3
             };
 
+            function ansiToHtml(text) {
+                // Convert ANSI dark green text to HTML
+                const darkGreenTextHtml = text.replace(/\u001b\[32m/g, '<br><span style="color:darkgreen;">');
+
+                // Convert ANSI orange text to HTML (note: there's no exact 'orange' in basic HTML colors, 'orange' is used for demonstration)
+                const orangeTextHtml = darkGreenTextHtml.replace(/\u001b\[33m/g, '<br><span style="color:orange;">');
+
+                // Reset ANSI formatting to default
+                const resetFormattingHtml = orangeTextHtml.replace(/\u001b\[0m/g, '</span>');
+
+                return resetFormattingHtml;
+            }
+
             function parseAndDisplayCitation(citation) {
                 $.post('/parse', { citation: citation }, function(data) {
                     if (data.error) {
@@ -114,7 +127,7 @@
                             parseAndDisplayCitation(reference);
                             //updateCitation();
                             // Display the fetched quote
-                            $('#citation').text(data.quote);
+                            $('#citation').text(ansiToHtml(data.quote));
                         }
                         }, 'json');
                 }).fail(function() {
@@ -155,21 +168,34 @@
 
             $('#searchForm').on('submit', function(event) {
                 event.preventDefault();
+                
+                // Collect input values
                 const citationInputVal = $('#citationInput').val();
                 const versionSelected = $('#version').val();
-
-                $.post('/search', { query: citationInputVal, version: versionSelected }, function(data) {
+                const version2Selected = $('#version2').val();
+                const version3Selected = $('#version3').val();
+                
+                // Prepare the data object for the POST request
+                const postData = {
+                    query: citationInputVal,
+                    version: versionSelected,
+                    version2: version2Selected,
+                    version3: version3Selected
+                };
+                console.log('postData:', postData);
+                
+                $.post('/search', postData, function(data) {
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);
                         $('#citation').text('Error fetching quote. Please try again.');
                     } else {
                         // Display the fetched quote
-                        $('#citation').text(data.quote);
+                        $('#citation').html(ansiToHtml(data.quote));
                     }
                 }, 'json');
-            parseAndDisplayCitation(citationInputVal);
                 
-
+                // Optionally parse and display citation details (if you have implemented this functionality)
+                parseAndDisplayCitation(citationInputVal);
             });
         });
     </script>
