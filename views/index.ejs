@@ -110,6 +110,30 @@
                     $('#line').text(data.lines && data.lines.length > 0 ? `Lines: ${data.lines.join(", ")}` : 'Select a line');
                 }, 'json');
             }
+            //
+            function getVersions(ref){
+                let citationInputVal;
+                // if reference is not provided, use the input value
+                if (!ref) {
+                    citationInputVal = $('#citationInput').val();
+                } else {
+                    citationInputVal = ref;
+                }
+                
+                const versionSelected = $('#version').val();
+                const version2Selected = $('#version2').val();
+                const version3Selected = $('#version3').val();
+                
+                // Prepare the data object for the POST request
+                const postData = {
+                    query: citationInputVal,
+                    version: versionSelected,
+                    version2: version2Selected,
+                    version3: version3Selected
+                };
+                return postData;
+            }
+            
 
         //{ query: citationInputVal, version: versionSelected }
         $(document).ready(function() {
@@ -117,8 +141,9 @@
                 var selectedVersion = $('#version').val();
                 $.get('/random-verse-reference', function(_data) {
                     const reference = _data.reference;
+                    const postData = getVersions(reference);
                     // Now use the /search API to get the quote for this reference
-                    $.post('/search', { query: reference, version: selectedVersion }, function(data) {
+                    $.post('/search', postData, function(data) {
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
                             $('#citation').text('Error fetching quote. Please try again.');
@@ -127,7 +152,7 @@
                             parseAndDisplayCitation(reference);
                             //updateCitation();
                             // Display the fetched quote
-                            $('#citation').text(ansiToHtml(data.quote));
+                            $('#citation').html(ansiToHtml(data.quote));
                         }
                         }, 'json');
                 }).fail(function() {
@@ -170,19 +195,7 @@
                 event.preventDefault();
                 
                 // Collect input values
-                const citationInputVal = $('#citationInput').val();
-                const versionSelected = $('#version').val();
-                const version2Selected = $('#version2').val();
-                const version3Selected = $('#version3').val();
-                
-                // Prepare the data object for the POST request
-                const postData = {
-                    query: citationInputVal,
-                    version: versionSelected,
-                    version2: version2Selected,
-                    version3: version3Selected
-                };
-                console.log('postData:', postData);
+                const postData = getVersions();
                 
                 $.post('/search', postData, function(data) {
                     if (data.error) {
@@ -195,7 +208,7 @@
                 }, 'json');
                 
                 // Optionally parse and display citation details (if you have implemented this functionality)
-                parseAndDisplayCitation(citationInputVal);
+                parseAndDisplayCitation(postData.query);
             });
         });
     </script>
