@@ -210,6 +210,29 @@
                 // Optionally parse and display citation details (if you have implemented this functionality)
                 parseAndDisplayCitation(postData.query);
             });
+
+            $('#findButton').click(function() {
+                const findText = $('#findText').val();
+                const version = $('#version').val();
+                const caseInsensitive = $('#caseInsensitive').is(':checked');
+                const wholeWords = $('#wholeWords').is(':checked');
+                if (!findText.trim()) {
+                    alert('Please enter text to find.');
+                    return;
+                }
+
+                // Send request to server to perform the search
+                $.post('/search-text', { 
+                    query: findText
+                    , version: version
+                    , caseInsensitive: caseInsensitive
+                    , wholeWords: wholeWords
+                }, function(data) {
+                    $('#citation').html(data.results || 'No results found.');
+                }).fail(function() {
+                    $('#citation').text('Error performing search. Please try again.');
+                });
+            });
         });
     </script>
 </head>
@@ -268,6 +291,16 @@
         <div>
             <button type="submit">Search</button>
         </div>
+        <div>
+            <label for="findText">Find text:</label>
+            <input type="text" id="findText" name="findText" placeholder="Enter text to find" required/>
+            <button type="button" id="findButton">Find</button>
+                <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
+                <label for="caseInsensitive">case-insensitive</label>
+                <input type="checkbox" id="wholeWords" name="wholeWords">
+                <label for="wholeWords">whole words</label>
+        </div>
+
     </form>
     <hr>
     <div id="citation"></div>

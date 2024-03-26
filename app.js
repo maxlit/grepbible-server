@@ -90,6 +90,22 @@ function updateAvailableBibles() {
   });
 }
 
+function processGrepOutput(grepOutput) {
+  const lines = grepOutput.split('\n').filter(line => line.trim());
+  const htmlLines = lines.map(line => {
+      const match = line.match(/.*\/([^\/]+)\/(\d+)\.txt:(\d+):(.*)/);
+      if (!match) {
+          console.error('Error parsing line:', line);
+          return 'Error parsing line.';
+      }
+
+      const [, book, chapter, verse, text] = match;
+      return `<b>${book} ${chapter}:${verse}</b> ${text}`;
+  });
+
+  return htmlLines.join('<br>');
+}
+
 function parseCitation(citation, callback) {
     exec(`gbib --parse '${citation}'`, (error, stdout, stderr) => {
       if (error) {
@@ -167,25 +183,60 @@ app.post('/search', (req, res) => {
     });
 });
 
+app.post('/search-text', (req, res) => {
+  const { query, version, caseInsensitive, wholeWords } = req.body;
+  const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
+  const versionDir = `${localBibleDir}/${version}`;
+  console.log('caseInsensitive:', caseInsensitive);
+  console.log('wholeWords:', wholeWords);
+  let commandParts = ['grep', '--color', '-nr'];
 
-  app.post('/parse', (req, res) => {
-    const citation = req.body.citation; // Assume the citation is sent from the client
-    
-    exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
+  if (caseInsensitive === true || caseInsensitive === 'true') {
+      commandParts.push('-i');
+  }
+  if (wholeWords === true || wholeWords === 'true') {
+      commandParts.push('-w');
+  }
+
+  commandParts.push(`"${query}"`, `"${versionDir}"`);
+
+  const grepCommand = commandParts.join(' ');
+  console.log('grepCommand:', grepCommand);
+
+  const { exec } = require('child_process');
+  exec(grepCommand, (error, stdout, stderr) => {
       if (error) {
-        console.error(`exec error: ${error}`);
-        res.json({ error: "Error retrieving citation details." });
-        return;
+          console.error(`exec error: ${error}`);
+          return res.json({ error: "Error performing search." });
       }
-      try {
-        const [book, chapter, lines] = JSON.parse(stdout);
-        //console.log({ book, chapter, lines }); // Temporarily log the values
-        res.json({ book, chapter, lines });
-      } catch (err) {
-        console.error(`Error parsing JSON: ${err}`);
-        res.json({ error: "Error parsing citation details." });
+      if (stderr) {
+          console.error(`stderr: ${stderr}`);
+          return res.json({ error: "Error performing search." });
       }
-    });
+      console.log(`stdout: ${stdout}`);
+      res.json({ results: processGrepOutput(stdout) || "No results found." });
   });
+});
+
+
+app.post('/parse', (req, res) => {
+  const citation = req.body.citation; // Assume the citation is sent from the client
+  
+  exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      res.json({ error: "Error retrieving citation details." });
+      return;
+    }
+    try {
+      const [book, chapter, lines] = JSON.parse(stdout);
+      //console.log({ book, chapter, lines }); // Temporarily log the values
+      res.json({ book, chapter, lines });
+    } catch (err) {
+      console.error(`Error parsing JSON: ${err}`);
+      res.json({ error: "Error parsing citation details." });
+    }
+  });
+});
 
 module.exports = app; // Make sure this is at the end of app.js
