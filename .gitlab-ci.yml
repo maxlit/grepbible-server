@@ -15,11 +15,13 @@ cache:
     - node_modules/
     - .npm/
 
-.node-base:
+.node-python-base:
   image: node:latest
   before_script:
     - node -v  # Print out node version for debugging
     - npm -v   # Print out npm version for debugging
+    - apk add --no-cache python3 py3-pip  # Install Python and pip (Alpine Linux)
+    - python3 -m pip install grepbible  # Install grepbible Python package
     - npm install  # Install project dependencies
 
 update-version:
