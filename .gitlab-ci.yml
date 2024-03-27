@@ -50,6 +50,7 @@ dockerize:
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_IMAGE_NAME: "grepbible-server"
   script:
     - echo "Building Docker image..."
     - docker build -t ${DOCKER_IMAGE_NAME}:latest .
@@ -78,6 +79,10 @@ release-docker:
     - docker:20.10.24-dind
   only:
     - tags
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_IMAGE_NAME: "grepbible-server"
   script:
     - echo "Docker Hub Username ${DOCKER_HUB_USERNAME}"
     - docker info
