@@ -1,4 +1,5 @@
 stages:
+  - setup
   - test
   - static
   - build
@@ -6,7 +7,7 @@ stages:
   - release
 
 variables:
-  DOCKER_IMAGE_NAME: "grepbible"
+  DOCKER_IMAGE_NAME: "grepbible-server"
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -20,6 +21,14 @@ cache:
     - node -v  # Print out node version for debugging
     - npm -v   # Print out npm version for debugging
     - npm install  # Install project dependencies
+
+update-version:
+  stage: setup
+  image: node:latest
+  script:
+    - node update-version.js
+  only:
+    - tags
 
 eslint:
   stage: static
