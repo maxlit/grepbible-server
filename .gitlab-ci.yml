@@ -34,7 +34,7 @@ update-version:
 
 eslint:
   stage: static
-  extends: .node-base
+  extends: .node-python-base
   allow_failure: true
   script:
     - npm install eslint
@@ -56,13 +56,13 @@ dockerize:
 
 test:
   stage: test
-  extends: .node-base
+  extends: .node-python-base
   script:
     - npm test  # Run tests
 
 build:
   stage: build
-  extends: .node-base
+  extends: .node-python-base
   script:
     - echo "Building application for production..."
     - npm run build
@@ -72,7 +72,7 @@ build:
 
 release-npm-package:
   stage: release
-  extends: .node-base
+  extends: .node-python-base
   only:
     - tags
   script:
