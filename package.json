@@ -1,6 +1,6 @@
 {
   "name": "grepbible-server",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -24,5 +24,8 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
     "supertest": "^6.3.4"
+  },
+  "bin": {
+    "grepbible-server": "./cli.js"
   }
 }
