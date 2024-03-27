@@ -2,7 +2,6 @@ stages:
   - setup
   - test
   - static
-  - build
   - dockerize
   - release
 
@@ -61,16 +60,6 @@ test:
   extends: .node-python-base
   script:
     - npm test  # Run tests
-
-build:
-  stage: build
-  extends: .node-python-base
-  script:
-    - echo "Building application for production..."
-    - npm run build
-  artifacts:
-    paths:
-      - build/
 
 release-npm-package:
   stage: release
