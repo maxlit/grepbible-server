@@ -19,14 +19,14 @@ Clone the project locally, and then run
 
 ## Installation
 
-To install `grepbible`, you need to install `grepbible` CLI tool first, `pip install grepbible` should do it, consult [this page](https://github.com/maxlit/grepbible?tab=readme-ov-file#installation)  for more details.
-Then you need to install the nodeJS server app: `npm install grepbible`
+To install `grepbible-server`, you need to install `grepbible` CLI tool first, `pip install grepbible` should do it, consult [this page](https://github.com/maxlit/grepbible?tab=readme-ov-file#installation)  for more details.
+Then you need to install the nodeJS server app: `npm install grepbible-server`
 
 Alternatively, you can clone this project, and run `npm start`.
 
 ## Contributing
 
-Contributions to `grepbible` are welcome! Whether it's improving code, or reporting issues, or spreading the word, or financial support, your input is valuable.  
+Contributions to `grepbible-server` are welcome! Whether it's improving code, or reporting issues, or spreading the word, or financial support, your input is valuable.  
 
 ### Issues/bugs
 
