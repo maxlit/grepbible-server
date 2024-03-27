@@ -20,7 +20,7 @@ cache:
   before_script:
     - node -v  # Print out node version for debugging
     - npm -v   # Print out npm version for debugging
-    - apk add --no-cache python3 py3-pip  # Install Python and pip (Alpine Linux)
+    - apt-get update && apt-get install -y python3 python3-pip  # Install Python and pip (Debian-based)
     - python3 -m pip install grepbible  # Install grepbible Python package
     - npm install  # Install project dependencies
 
