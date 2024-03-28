@@ -30,6 +30,9 @@ update-version:
   image: node:latest
   script:
     - node update-version.js
+  artifacts:
+    paths:
+      - package.json
   only:
     - tags
 
@@ -74,6 +77,7 @@ release-npm-package:
 
 release-docker:
   stage: release
+  needs: ["update-version"]
   image: docker:20.10.24
   services:
     - docker:20.10.24-dind
