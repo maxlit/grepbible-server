@@ -17,6 +17,12 @@ You are encouraged to use this project as a foundation or inspiration for crafti
 Clone the project locally, and then run
 `docker compose up .`
 
+Alternatively, you can pull the docker's image (here on port 4628):
+
+`docker run -d -p 4628:4628 --name grepbible-server axlit/grepbible-server:latest`
+
+and run it 
+
 ## Installation
 
 To install `grepbible-server`, you need to install `grepbible` CLI tool first, `pip install grepbible` should do it, consult [this page](https://github.com/maxlit/grepbible?tab=readme-ov-file#installation)  for more details.
