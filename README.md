@@ -19,9 +19,11 @@ Clone the project locally, and then run
 
 Alternatively, you can pull the docker's image (here on port 4628):
 
-`docker run -d -p 4628:4628 --name grepbible-server axlit/grepbible-server:latest`
+`docker pull axlit/grepbible-server`
 
 and run it 
+
+`docker run -d -p 4628:4628 --name grepbible-server axlit/grepbible-server:latest`
 
 ## Installation
 
