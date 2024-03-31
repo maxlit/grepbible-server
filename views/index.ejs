@@ -2,6 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <style>
+        .container {
+            text-align: center; /* Center the line if desired */
+        }
+        .highlight {
+            color: red;
+        }
+
+        .quarter-line {
+            display: inline-block; /* Makes the width setting applicable */
+            width: 25%; /* Set the line width to 50% of its parent */
+            height: 1px; /* Set the line thickness */
+            background-color: grey; /* Set the line color */
+            /*margin-top: 10px;
+            margin-bottom: 10px;*/
+        }
+        
+    </style>
     <title>grepbible WebUI</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
@@ -73,6 +91,23 @@
                 'Zechariah': 14,
                 'Zephaniah': 3
             };
+
+            function highlightText(fullText, searchText) {
+                // Escape HTML special characters in searchText to prevent XSS attacks if searchText is user-controlled
+                const escapedSearchText = searchText.replace(/[&<>"']/g, function(match) {
+                    return {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[match];
+                });
+
+                // Simple replacement to wrap searchText in a span for highlighting
+                const highlighted = fullText.split(escapedSearchText).join(`<span class="highlight">${escapedSearchText}</span>`);
+                return highlighted;
+            }
 
             function ansiToHtml(text) {
                 // Convert ANSI dark green text to HTML
@@ -228,7 +263,7 @@
                     , caseInsensitive: caseInsensitive
                     , wholeWords: wholeWords
                 }, function(data) {
-                    $('#citation').html(data.results || 'No results found.');
+                    $('#citation').html(highlightText(data.results, findText) || 'No results found.');
                 }).fail(function() {
                     $('#citation').text('Error performing search. Please try again.');
                 });
@@ -275,7 +310,6 @@
         <div>
             <input type="text" id="citationInput" name="query" placeholder="quote e.g. Genesis 1:1" required/>
         </div>
-        <button id="randomVerseBtn">Random Verse</button>
         <div>
             <label for="book">Book:</label>
             <select id="book"></select>
@@ -291,7 +325,15 @@
         <div>
             <button type="submit">Search</button>
         </div>
+        <br>
+        <div class="quarter-line">
+            
+            <button id="randomVerseBtn">Random Verse</button>
+            <br>
+        </div>
+        <br>
         <div>
+            <br>
             <label for="findText">Find text:</label>
             <input type="text" id="findText" name="findText" placeholder="Enter text to find" required/>
             <button type="button" id="findButton">Find</button>
