@@ -4,6 +4,10 @@ grepbible-server is a server on top of [grepbible](https://en.wikipedia.org/wiki
 
 You are encouraged to use this project as a foundation or inspiration for crafting your own unique web UI built upon `grepbible` CLI tool. Whether you're looking to implement advanced features, integrate with other services, or simply experiment with new design concepts, this project is designed to be easily forkable and modifiable to suit your creative vision. Thus, although it's functional, it has rudimentary UI design on purpose, to make it easy to fork and build the design from scratch.
 
+# Demo 
+
+![demo](./demo/240404_gbib_demo.gif)
+
 ## Features
 
 - **Full-text search**: Search for words or phrases in the whole text (`grep` experience).
@@ -55,7 +59,7 @@ Please ensure your code adheres to the project's style and quality standards. Fo
 
 Feel free to spread the word or/and use the hashtag `#grepbible` in social media.
 
-### Financial
+### Material
 
 Feel free to buy me a coffee: [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J1VEX6J)
 
