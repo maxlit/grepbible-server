@@ -183,40 +183,40 @@ app.post('/search', (req, res) => {
     });
 });
 
+const { execFile } = require('child_process');
+
 app.post('/search-text', (req, res) => {
   const { query, version, caseInsensitive, wholeWords } = req.body;
   const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
   const versionDir = `${localBibleDir}/${version}`;
-  console.log('caseInsensitive:', caseInsensitive);
-  console.log('wholeWords:', wholeWords);
-  let commandParts = ['grep', '--color', '-nr'];
+
+  // Prepare grep options
+  let options = ['-nr']; // Default options
 
   if (caseInsensitive === true || caseInsensitive === 'true') {
-      commandParts.push('-i');
+    options.push('-i');
   }
   if (wholeWords === true || wholeWords === 'true') {
-      commandParts.push('-w');
+    options.push('-w');
   }
 
-  commandParts.push(`"${query}"`, `"${versionDir}"`);
+  // Safely construct the grep command with sanitized inputs
+  const args = [...options, query, versionDir];
 
-  const grepCommand = commandParts.join(' ');
-  console.log('grepCommand:', grepCommand);
-
-  const { exec } = require('child_process');
-  exec(grepCommand, (error, stdout, stderr) => {
-      if (error) {
-          console.error(`exec error: ${error}`);
-          return res.json({ error: "Error performing search." });
-      }
-      if (stderr) {
-          console.error(`stderr: ${stderr}`);
-          return res.json({ error: "Error performing search." });
-      }
-      console.log(`stdout: ${stdout}`);
-      res.json({ results: processGrepOutput(stdout) || "No results found." });
+  execFile('grep', args, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`exec error: ${error}`);
+      return res.json({ error: "Error performing search." });
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return res.json({ error: "Error performing search." });
+    }
+    console.log(`stdout: ${stdout}`);
+    res.json({ results: processGrepOutput(stdout) || "No results found." });
   });
 });
+
 
 
 app.post('/parse', (req, res) => {
