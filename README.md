@@ -8,6 +8,8 @@ You are encouraged to use this project as a foundation or inspiration for crafti
 
 ![demo](./demo/240404_gbib_demo.gif)
 
+The endpoint is available at [langtools.io/gb](https://langtools.io/gb) to try.
+
 ## Features
 
 - **Full-text search**: Search for words or phrases in the whole text (`grep` experience).
