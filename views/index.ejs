@@ -247,6 +247,7 @@
             });
 
             $('#findButton').click(function() {
+                $('#citation').html('');
                 const findText = $('#findText').val();
                 const version = $('#version').val();
                 const caseInsensitive = $('#caseInsensitive').is(':checked');
