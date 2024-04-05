@@ -28,6 +28,6 @@
     "supertest": "^6.3.4"
   },
   "bin": {
-    "grepbible-server": "./cli.js"
+    "grepbible-server": "./src/scripts/cli.js"
   }
 }
