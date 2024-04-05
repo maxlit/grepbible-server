@@ -138,7 +138,7 @@ app.get('/', (req, res) => {
   res.render('index', { basePath, bibles }); // Pass the bibles list to the view
 });
 
-app.get(`/random-verse-reference`, (req, res) => {
+app.get(`random-verse-reference`, (req, res) => {
     exec('gbib -r', (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
@@ -153,7 +153,7 @@ app.get(`/random-verse-reference`, (req, res) => {
 });
 
 
-app.post(`/search`, (req, res) => {
+app.post(`search`, (req, res) => {
     //const { query, version } = req.body;
     const { query } = req.body;
 
@@ -188,7 +188,7 @@ app.post(`/search`, (req, res) => {
     });
 });
 
-app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
+app.get(`q/:version/:book/:chapter/:verses?`, (req, res) => {
   const { version, book, chapter, verses } = req.params;
   // Construct the query using the book, chapter, and verses
   let query = `${book} ${chapter}`;
@@ -214,7 +214,7 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
 
 const { execFile } = require('child_process');
 
-app.post(`/search-text`, (req, res) => {
+app.post(`search-text`, (req, res) => {
   const { query, version, caseInsensitive, wholeWords } = req.body;
   const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
   const versionDir = `${localBibleDir}/${version}`;
@@ -248,7 +248,7 @@ app.post(`/search-text`, (req, res) => {
 
 
 
-app.post(`/parse`, (req, res) => {
+app.post(`parse`, (req, res) => {
   const citation = req.body.citation; // Assume the citation is sent from the client
   
   exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {

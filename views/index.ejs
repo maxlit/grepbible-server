@@ -23,7 +23,7 @@
     <title>grepbible WebUI</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
-        var basePath = '<%= basePath %>';
+        var basePath = window.location.pathname;
 
         const BOOK2CHAPTERS = {
                 '1 Chronicles': 29,
