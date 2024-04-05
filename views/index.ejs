@@ -132,6 +132,7 @@
                 $.post(basePath + '/parse', { citation: citation }, function(data) {
                     if (data.error) {
                         console.error('Error parsing citation:', data.error);
+                        console.error('Citation:', citation);
                         return;
                     }
 
@@ -248,8 +249,7 @@
                     }
                 }, 'json');
                 
-                // Optionally parse and display citation details (if you have implemented this functionality)
-                parseAndDisplayCitation(postData.query);
+                //parseAndDisplayCitation(postData.query);
             });
 
             $('#findButton').click(function() {
