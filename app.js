@@ -7,6 +7,20 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  const prefix = req.headers['x-forwarded-prefix'];
+  if (prefix && req.url.startsWith(prefix)) {
+    // Calculate the new starting point for the substring.
+    const newStart = prefix.length;
+    // Use substring instead of substr.
+    req.url = req.url.substring(newStart) || '/';
+    req.baseUrl = prefix; // Set the base URL if you need to use it later
+  }
+  next();
+});
+
+
+
 const BOOK2CHAPTERS = {
     '1 Chronicles': 29,
     '1 Corinthians': 16,
