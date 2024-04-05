@@ -63,6 +63,7 @@ test:
   stage: test
   extends: .node-python-base
   script:
+    - mkdir /root/grepbible_data
     - gbib -d kj
     - npm test  # Run tests
 
