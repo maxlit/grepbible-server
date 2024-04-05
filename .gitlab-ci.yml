@@ -29,7 +29,7 @@ update-version:
   stage: setup
   image: node:latest
   script:
-    - node update-version.js
+    - node src/scripts/update-version.js
   artifacts:
     paths:
       - package.json

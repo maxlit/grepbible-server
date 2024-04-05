@@ -1,82 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 const app = express();
 const cors = require('cors');
+const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 
 app.use(cors());
 app.use(express.json());
 
 const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
-
-const BOOK2CHAPTERS = {
-    '1 Chronicles': 29,
-    '1 Corinthians': 16,
-    '1 John': 5,
-    '1 Kings': 22,
-    '1 Peter': 5,
-    '1 Samuel': 31,
-    '1 Thessalonians': 5,
-    '1 Timothy': 6,
-    '2 Chronicles': 36,
-    '2 Corinthians': 13,
-    '2 John': 1,
-    '2 Kings': 25,
-    '2 Peter': 3,
-    '2 Samuel': 24,
-    '2 Thessalonians': 3,
-    '2 Timothy': 4,
-    '3 John': 1,
-    'Acts': 28,
-    'Amos': 9,
-    'Colossians': 4,
-    'Daniel': 12,
-    'Deuteronomy': 34,
-    'Ecclesiastes': 12,
-    'Ephesians': 6,
-    'Esther': 10,
-    'Exodus': 40,
-    'Ezekiel': 48,
-    'Ezra': 10,
-    'Galatians': 6,
-    'Genesis': 50,
-    'Habakkuk': 3,
-    'Haggai': 2,
-    'Hebrews': 13,
-    'Hosea': 14,
-    'Isaiah': 66,
-    'James': 5,
-    'Jeremiah': 52,
-    'Job': 42,
-    'Joel': 3,
-    'John': 21,
-    'Jonah': 4,
-    'Joshua': 24,
-    'Jude': 1,
-    'Judges': 21,
-    'Lamentations': 5,
-    'Leviticus': 27,
-    'Luke': 24,
-    'Malachi': 4,
-    'Mark': 16,
-    'Matthew': 28,
-    'Micah': 7,
-    'Nahum': 3,
-    'Nehemiah': 13,
-    'Numbers': 36,
-    'Obadiah': 1,
-    'Philemon': 1,
-    'Philippians': 4,
-    'Proverbs': 31,
-    'Psalms': 150,
-    'Revelation': 22,
-    'Romans': 16,
-    'Ruth': 4,
-    'Song of Solomon': 8,
-    'Titus': 3,
-    'Zechariah': 14,
-    'Zephaniah': 3
-};
 
 let bibles = []; // Initialize bibles list
 
@@ -126,7 +58,19 @@ function parseCitation(citation, callback) {
           callback(null);
       }
     });
-  }
+}
+
+function executeGbib(query, versions, callback) {
+  exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
+      if (error) {
+          console.error(`exec error: ${error}`);
+          callback({ error: "Error retrieving verse. Make sure your query is correct." });
+      } else {
+          callback({ quote: stdout.trim() });
+      }
+  });
+}
+
 
 // Fetch the available bibles list once at the start
 updateAvailableBibles();
@@ -188,31 +132,39 @@ app.post(`/search`, (req, res) => {
     });
 });
 
-app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
+// Existing GET endpoint for API calls
+app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
   const { version, book, chapter, verses } = req.params;
-  // Construct the query using the book, chapter, and verses
   let query = `${book} ${chapter}`;
   if (verses) {
       query += `:${verses}`;
   }
+  const versions = version.split(',').join(',');
+  executeGbib(query, versions, (result) => res.json(result));
+});
 
-  // Convert the version string into an array and join with commas for the CLI command
+// New GET endpoint for search functionality
+app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
+  const { version, book, chapter, verses } = req.params;
+  let query = `${book} ${chapter}`;
+  if (verses) {
+      query += `:${verses}`;
+  }
   const versions = version.split(',').join(',');
 
-  exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
-      if (error) {
-          console.error(`exec error: ${error}`);
-          return res.json({ error: "Error retrieving verse. Make sure your query is correct." });
+  // Assuming you might have additional logic here, otherwise, this is essentially the same as the /api/q endpoint
+  executeGbib(query, versions, (result) => {
+      if (result.error) {
+          // Handle error for non-AJAX requests differently if necessary
+          res.render('index', { basePath, bibles, results: result.error });
+      } else {
+          // Send response or render view as needed
+          res.render('index', { basePath, bibles, results: result.quote });
       }
-
-      // Assuming CLI output is the desired response format
-      // Adjust as necessary for your application's response format needs
-      res.json({ quote: stdout.trim() });
   });
 });
 
 
-const { execFile } = require('child_process');
 
 app.post(`/search-text`, (req, res) => {
   const { query, version, caseInsensitive, wholeWords } = req.body;

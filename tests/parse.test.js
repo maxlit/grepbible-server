@@ -10,7 +10,7 @@ describe('POST /parse', () => {
       .expect('Content-Type', /json/)
       .expect(200);
     
-    console.log(response.body);
+    //console.log(response.body);
     expect(response.body).toEqual({
       book: 'Joshua',
       chapter: '10',
