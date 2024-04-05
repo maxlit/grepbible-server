@@ -10,7 +10,7 @@ describe('GET /q/:version/:book/:chapter/:verses?', () => {
         const verses = '29';
 
         const response = await request(app)
-            .get(`/q/${version}/${book}/${chapter}/${verses}`)
+            .get(`q/${version}/${book}/${chapter}/${verses}`)
             .expect('Content-Type', /json/)
             .expect(200);
 
