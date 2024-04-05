@@ -7,19 +7,7 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  const prefix = req.headers['x-forwarded-prefix'];
-  if (prefix && req.url.startsWith(prefix)) {
-    // Calculate the new starting point for the substring.
-    const newStart = prefix.length;
-    // Use substring instead of substr.
-    req.url = req.url.substring(newStart) || '/';
-    req.baseUrl = prefix; // Set the base URL if you need to use it later
-  }
-  next();
-});
-
-
+const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
 const BOOK2CHAPTERS = {
     '1 Chronicles': 29,
@@ -150,7 +138,7 @@ app.get('/', (req, res) => {
   res.render('index', { bibles }); // Pass the bibles list to the view
 });
 
-app.get('/random-verse-reference', (req, res) => {
+app.get(`${basePath}/random-verse-reference`, (req, res) => {
     exec('gbib -r', (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
@@ -165,7 +153,7 @@ app.get('/random-verse-reference', (req, res) => {
 });
 
 
-app.post('/search', (req, res) => {
+app.post(`${basePath}/search`, (req, res) => {
     //const { query, version } = req.body;
     const { query } = req.body;
 
@@ -200,7 +188,7 @@ app.post('/search', (req, res) => {
     });
 });
 
-app.get('/q/:version/:book/:chapter/:verses?', (req, res) => {
+app.get(`${basePath}/q/:version/:book/:chapter/:verses?`, (req, res) => {
   const { version, book, chapter, verses } = req.params;
   // Construct the query using the book, chapter, and verses
   let query = `${book} ${chapter}`;
@@ -226,7 +214,7 @@ app.get('/q/:version/:book/:chapter/:verses?', (req, res) => {
 
 const { execFile } = require('child_process');
 
-app.post('/search-text', (req, res) => {
+app.post(`${basePath}/search-text`, (req, res) => {
   const { query, version, caseInsensitive, wholeWords } = req.body;
   const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
   const versionDir = `${localBibleDir}/${version}`;
@@ -260,7 +248,7 @@ app.post('/search-text', (req, res) => {
 
 
 
-app.post('/parse', (req, res) => {
+app.post(`${basePath}/parse`, (req, res) => {
   const citation = req.body.citation; // Assume the citation is sent from the client
   
   exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
