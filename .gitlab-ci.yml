@@ -63,6 +63,7 @@ test:
   stage: test
   extends: .node-python-base
   script:
+    - gbib -d kj
     - npm test  # Run tests
 
 release-npm-package:
