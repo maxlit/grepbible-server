@@ -24,6 +24,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         var basePath = window.location.pathname;
+        if (basePath.endsWith('/')) {
+            basePath = basePath.slice(0, -1); // Remove trailing slash
+        }
+
 
         const BOOK2CHAPTERS = {
                 '1 Chronicles': 29,
