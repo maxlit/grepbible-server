@@ -2,6 +2,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { exec } = require('child_process');
 const app = express();
+const cors = require('cors');
+
+app.use(cors());
 app.use(express.json());
 
 const BOOK2CHAPTERS = {

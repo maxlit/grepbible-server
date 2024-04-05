@@ -1,4 +1,4 @@
-const app = require('./app'); // Adjust the path as necessary
+const app = require('./app');
 
 const PORT = process.env.PORT || 4628;
 app.listen(PORT, () => {
