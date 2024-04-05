@@ -1,6 +1,13 @@
 # Use a base image that includes both Node.js and Python
 FROM nikolaik/python-nodejs:python3.9-nodejs16
 
+# less and nano for debugging
+RUN apt-get update && \
+    apt-get install -y less && \
+    apt-get install -y nano && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
@@ -32,4 +39,4 @@ COPY . .
 EXPOSE 4628
 
 # Command to run the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
