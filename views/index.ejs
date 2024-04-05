@@ -23,6 +23,8 @@
     <title>grepbible WebUI</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
+        var basePath = '<%= basePath %>';
+
         const BOOK2CHAPTERS = {
                 '1 Chronicles': 29,
                 '1 Corinthians': 16,
@@ -123,7 +125,7 @@
             }
 
             function parseAndDisplayCitation(citation) {
-                $.post('/parse', { citation: citation }, function(data) {
+                $.post(basePath + '/parse', { citation: citation }, function(data) {
                     if (data.error) {
                         console.error('Error parsing citation:', data.error);
                         return;
@@ -174,11 +176,11 @@
         $(document).ready(function() {
             $('#randomVerseBtn').click(function() {
                 var selectedVersion = $('#version').val();
-                $.get('/random-verse-reference', function(_data) {
+                $.get(basePath + '/random-verse-reference', function(_data) {
                     const reference = _data.reference;
                     const postData = getVersions(reference);
                     // Now use the /search API to get the quote for this reference
-                    $.post('/search', postData, function(data) {
+                    $.post(basePath + '/search', postData, function(data) {
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
                             $('#citation').text('Error fetching quote. Please try again.');
@@ -232,7 +234,7 @@
                 // Collect input values
                 const postData = getVersions();
                 
-                $.post('/search', postData, function(data) {
+                $.post(basePath + '/search', postData, function(data) {
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);
                         $('#citation').text('Error fetching quote. Please try again.');
@@ -258,7 +260,7 @@
                 }
 
                 // Send request to server to perform the search
-                $.post('/search-text', { 
+                $.post(basePath + '/search-text', { 
                     query: findText
                     , version: version
                     , caseInsensitive: caseInsensitive

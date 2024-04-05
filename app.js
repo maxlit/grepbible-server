@@ -135,7 +135,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.render('index', { bibles }); // Pass the bibles list to the view
+  res.render('index', { basePath, bibles }); // Pass the bibles list to the view
 });
 
 app.get(`${basePath}/random-verse-reference`, (req, res) => {
@@ -174,7 +174,7 @@ app.post(`${basePath}/search`, (req, res) => {
                 res.json({ error: "Error retrieving verse. Make sure your query is correct." });
             } else {
                 // For non-AJAX requests, keep the original behavior
-                res.render('index', { bibles, results: "Error retrieving verse. Make sure your query is correct." });
+                res.render('index', { basePath, bibles, results: "Error retrieving verse. Make sure your query is correct." });
             }
         } else {
             if (req.xhr || req.headers.accept.includes('application/json')) {
@@ -182,7 +182,7 @@ app.post(`${basePath}/search`, (req, res) => {
                 res.json({ quote: stdout.trim() });
             } else {
                 // Render the index view with the search results for non-AJAX requests
-                res.render('index', { bibles, results: stdout });
+                res.render('index', { basePath, bibles, results: stdout });
             }
         }
     });
