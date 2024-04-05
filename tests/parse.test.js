@@ -4,7 +4,7 @@ const app = require('../app'); // Adjust the path to where your Express app is e
 describe('POST /parse', () => {
   it('parses citation "Joshua 10:29"', async () => {
     const response = await request(app)
-      .post('/parse')
+      .post('parse')
       .send({ citation: 'Joshua 10:29' })
       .set('Content-Type', 'application/json') // Explicitly set the Content-Type
       .expect('Content-Type', /json/)
