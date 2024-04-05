@@ -43,23 +43,6 @@ function processGrepOutput(grepOutput) {
   return htmlLines.join('<br>');
 }
 
-function parseCitation(citation, callback) {
-    exec(`gbib --parse '${citation}'`, (error, stdout, stderr) => {
-      if (error) {
-          console.error(`exec error: ${error}`);
-          callback(null);
-          return;
-      }
-      try {
-          const parsedDetails = JSON.parse(stdout);
-          callback(parsedDetails);
-      } catch (parseError) {
-          console.error(`Error parsing JSON output: ${parseError}`);
-          callback(null);
-      }
-    });
-}
-
 function executeGbib(query, versions, callback) {
   exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
       if (error) {
@@ -198,26 +181,37 @@ app.post(`/search-text`, (req, res) => {
   });
 });
 
+function parseCitationAsync(citation) {
+  return new Promise((resolve, reject) => {
+    exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        reject("Error retrieving citation details.");
+      } else {
+        try {
+          const [book, chapter, lines] = JSON.parse(stdout);
+          resolve({ book, chapter, lines });
+        } catch (err) {
+          console.error(`Error parsing JSON: ${err}`);
+          reject("Error parsing citation details.");
+        }
+      }
+    });
+  });
+}
 
-
-app.post(`/parse`, (req, res) => {
+app.post(`/parse`, async (req, res) => {
   const citation = req.body.citation; // Assume the citation is sent from the client
   
-  exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`exec error: ${error}`);
-      res.json({ error: "Error retrieving citation details." });
-      return;
-    }
-    try {
-      const [book, chapter, lines] = JSON.parse(stdout);
-      //console.log({ book, chapter, lines }); // Temporarily log the values
-      res.json({ book, chapter, lines });
-    } catch (err) {
-      console.error(`Error parsing JSON: ${err}`);
-      res.json({ error: "Error parsing citation details." });
-    }
-  });
+  try {
+    // Await the result from the parseCitationAsync function
+    const parsedResult = await parseCitationAsync(citation);
+    res.json(parsedResult); // Send the parsed result back
+  } catch (error) {
+    // Handle any errors that might occur during parsing
+    console.error(`Error while parsing citation: ${error}`);
+    res.json({ error: "Error parsing citation details." });
+  }
 });
 
 module.exports = app; // Make sure this is at the end of app.js
