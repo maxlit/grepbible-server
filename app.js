@@ -186,6 +186,30 @@ app.post('/search', (req, res) => {
     });
 });
 
+app.get('/q/:version/:book/:chapter/:verses?', (req, res) => {
+  const { version, book, chapter, verses } = req.params;
+  // Construct the query using the book, chapter, and verses
+  let query = `${book} ${chapter}`;
+  if (verses) {
+      query += `:${verses}`;
+  }
+
+  // Convert the version string into an array and join with commas for the CLI command
+  const versions = version.split(',').join(',');
+
+  exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
+      if (error) {
+          console.error(`exec error: ${error}`);
+          return res.json({ error: "Error retrieving verse. Make sure your query is correct." });
+      }
+
+      // Assuming CLI output is the desired response format
+      // Adjust as necessary for your application's response format needs
+      res.json({ quote: stdout.trim() });
+  });
+});
+
+
 const { execFile } = require('child_process');
 
 app.post('/search-text', (req, res) => {
