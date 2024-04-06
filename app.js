@@ -27,7 +27,7 @@ function updateAvailableBibles() {
   });
 }
 
-function processGrepOutput(grepOutput) {
+function processGrepOutput(grepOutput, version) {
   const lines = grepOutput.split('\n').filter(line => line.trim());
   const htmlLines = lines.map(line => {
       const match = line.match(/.*\/([^\/]+)\/(\d+)\.txt:(\d+):(.*)/);
@@ -37,10 +37,20 @@ function processGrepOutput(grepOutput) {
       }
 
       const [, book, chapter, verse, text] = match;
-      return `<b>${book} ${chapter}:${verse}</b> ${text}`;
+      const url = `/q/${version}/${book}/${chapter}/${verse || ''}`;
+      return `<b><a href="${url}">${book} ${chapter}:${verse}</a></b> ${text}`;
   });
 
   return htmlLines.join('<br>');
+}
+
+function param2query(params) {
+  const { version, book, chapter, verses } = params;
+  let query = `${book} ${chapter}`;
+  if (verses) {
+      query += `:${verses}`;
+  }
+  return query;
 }
 
 function executeGbib(query, versions, callback) {
@@ -169,7 +179,7 @@ app.post(`/search-text`, (req, res) => {
       return res.json({ error: "Error performing search." });
     }
     console.log(`stdout: ${stdout}`);
-    res.json({ results: processGrepOutput(stdout) || "No results found." });
+    res.json({ results: processGrepOutput(stdout, version) || "No results found." });
   });
 });
 
