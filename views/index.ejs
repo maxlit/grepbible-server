@@ -152,7 +152,7 @@
                 return resetFormattingHtml;
             }
 
-            function parseAndDisplayCitation(citation) {
+            function parseAndDisplayCitation(citation, versions = ['kj']) {
                 $.post(calculateBasePath() + '/parse', { citation: citation }, function(data) {
                     if (data.error) {
                         console.error('Error parsing citation:', data.error);
@@ -175,12 +175,20 @@
                     // Handle line display; assuming 'data.lines' is an array of selected line numbers
                     $('#line').text(data.lines && data.lines.length > 0 ? `Lines: ${data.lines.join(", ")}` : 'Select a line');
                 }, 'json');
+                $('#version').val(versions[0]);
+                if (versions.length > 1) {
+                    $('#version2').val(versions[1]);
+                }
+                if (versions.length > 2) {
+                    $('#version3').val(versions[2]);
+                }
             }
             //
             function getVersions(ref){
                 let citationInputVal;
                 // if reference is not provided, use the input value
                 if (!ref) {
+                    console.log('getVersions::No reference provided, using input value');
                     citationInputVal = $('#citationInput').val();
                 } else {
                     citationInputVal = ref;
@@ -210,17 +218,19 @@
             }
 
             var reference = "<%= reference %>"; // This takes the server-side variable and makes it available client-side
+            var versions = <%- JSON.stringify(versions) %>;
 
             if (reference) {
                 $('#citationInput').val(reference);
-                parseAndDisplayCitation(reference);
+                parseAndDisplayCitation(reference, versions);
             }
             
             $('#randomVerseBtn').click(function() {
-                var selectedVersion = $('#version').val();
+                //var selectedVersion = $('#version').val();
                 $.get(calculateBasePath() + '/random-verse-reference', function(_data) {
-                    const reference = _data.reference;
-                    const postData = getVersions(reference);
+                    const _reference = _data.reference;
+                    console.log('ready::randomVerseBtn::Random verse reference:', _reference);
+                    const postData = getVersions(_reference);
                     // Now use the /search API to get the quote for this reference
                     $.post(calculateBasePath() + '/search', postData, function(data) {
                         if(data.redirectUrl) {
@@ -229,14 +239,8 @@
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
                             $('#citation').text('Error fetching quote. Please try again.');
-                        } else {
-                            $('#citationInput').val(reference);
-                            parseAndDisplayCitation(reference);
-                            //updateCitation();
-                            // Display the fetched quote
-                            $('#citation').html(ansiToHtml(data.quote));
                         }
-                        }, 'json');
+                    }, 'json');
                 }).fail(function() {
                     $('#randomVerseOutput').text("Failed to fetch a random verse reference. Please try again.");
                 });
@@ -273,8 +277,8 @@
                 bookSelect.append(`<option value="${book}">${book}</option>`);
             });
 
-            $('#searchForm').on('submit', function(event) {
-                event.preventDefault();
+            $('#findQuoteBtn').on('click', function(event) {
+                event.preventDefault(); // Prevent default button action, important if it's a submit button
                 
                 // Collect input values
                 const postData = getVersions();
@@ -292,8 +296,10 @@
                     }
                 }, 'json');
                 
+                // Optionally, if you need to parse and display citation details based on `postData`
                 //parseAndDisplayCitation(postData.query);
             });
+
 
             $('#findButton').click(function() {
                 $('#citation').html('');
@@ -328,7 +334,7 @@
         <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
     </div>
     <hr>
-    <form id="searchForm">
+    <div id="searchForm">
         <div>
             <label for="version">1st version:</label>
             <select name="version1" id="version">
@@ -374,7 +380,7 @@
             <span id="line"></span>
         </div>
         <div>
-            <button type="submit">Search</button>
+            <button id = "findQuoteBtn">Search</button>
         </div>
         <br>
         <div class="quarter-line">
@@ -394,7 +400,7 @@
                 <label for="wholeWords">whole words</label>
         </div>
 
-    </form>
+    </div>
     <hr>
     <div id="citation"></div>
 </body>
