@@ -105,43 +105,6 @@ app.post(`/search`,  async (req, res) => {
   }
 });
 
-app.post(`/_search`,  (req, res) => {
-    //const { query, version } = req.body;
-    const { query } = req.body;
-
-    const versionsArray = [
-        req.body.version,
-        req.body.version2,
-        req.body.version3
-    ].filter(Boolean); // Filter out any falsy values to ignore unselected versions
-
-  // Join the versions array into a comma-separated string
-  const versions = versionsArray.join(',');
-  
-
-    exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            if (req.xhr || req.headers.accept.includes('application/json')) {
-                // Respond with JSON in case of an AJAX request
-                res.json({ error: "Error retrieving verse. Make sure your query is correct." });
-            } else {
-                // For non-AJAX requests, keep the original behavior
-                res.render('index', { basePath, bibles, results: "Error retrieving verse. Make sure your query is correct." });
-            }
-        } else {
-            if (req.xhr || req.headers.accept.includes('application/json')) {
-                // Send the quote as JSON for AJAX requests
-                console.log(`THIS PATH -> Quote: ${stdout}`);
-                res.json({ quote: stdout.trim() });
-            } else {
-                // Render the index view with the search results for non-AJAX requests
-                res.render('index', { basePath, bibles, results: stdout });
-            }
-        }
-    });
-});
-
 // Existing GET endpoint for API calls
 app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
   const { version, book, chapter, verses } = req.params;
