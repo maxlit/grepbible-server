@@ -205,11 +205,18 @@
         $(document).ready(function() {
             // if data is defined, display it as `$('#citation').html(ansiToHtml(data.quote));`
             var results = "<%= results %>"; // This takes the server-side variable and makes it available client-side
-
+            
             if (results) {
                 $('#citation').html(ansiToHtml(results));
             }
 
+            var reference = "<%= reference %>"; // This takes the server-side variable and makes it available client-side
+
+            if (reference) {
+                $('#citationInput').val(reference);
+                parseAndDisplayCitation(reference);
+            }
+            
             $('#randomVerseBtn').click(function() {
                 var selectedVersion = $('#version').val();
                 $.get(calculateBasePath() + '/random-verse-reference', function(_data) {

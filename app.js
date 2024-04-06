@@ -61,7 +61,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.render('index', { basePath, bibles, results: '' }); // Pass the bibles list to the view
+  res.render('index', { basePath, bibles, results: '', reference: '' }); // Pass the bibles list to the view
 });
 
 app.get(`/random-verse-reference`, (req, res) => {
@@ -95,7 +95,6 @@ app.post(`/search`,  async (req, res) => {
       const { book, chapter, lines } = await parseCitationAsync(query);
       console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
       const getUrl = `/q/${versions}/${book}/${chapter}/${lines || ''}`;
-      console.log(`Redirecting to: ${getUrl}`);
       res.status(200).json({ redirectUrl: getUrl });
 
     } catch (error) {
@@ -126,17 +125,16 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
   }
   console.log(`Query: ${query}`);
   const versions = version.split(',').join(',');
-  console.log(`Versions: ${versions}`);
-  // Assuming you might have additional logic here, otherwise, this is essentially the same as the /api/q endpoint
+
   executeGbib(query, versions, (result) => {
       if (result.error) {
           // Handle error for non-AJAX requests differently if necessary
-          res.render('index', { basePath, bibles, results: result.error });
+          res.render('index', { basePath, bibles, results: result.error, reference: ''});
       } else {
           // Send response or render view as needed
           console.log(`Quote: ${result.quote}`);
           //res.json({ quote: result.quote });
-          res.render('index', { basePath, bibles, results: result.quote});
+          res.render('index', { basePath, bibles, results: result.quote, reference: query});
       }
   });
 });
