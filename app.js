@@ -54,7 +54,6 @@ function executeGbib(query, versions, callback) {
   });
 }
 
-
 // Fetch the available bibles list once at the start
 updateAvailableBibles();
 
@@ -62,7 +61,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.render('index', { basePath, bibles }); // Pass the bibles list to the view
+  res.render('index', { basePath, bibles, results: '' }); // Pass the bibles list to the view
 });
 
 app.get(`/random-verse-reference`, (req, res) => {
@@ -79,8 +78,34 @@ app.get(`/random-verse-reference`, (req, res) => {
     });
 });
 
+app.post(`/search`,  async (req, res) => {
+  const { query } = req.body;
+  console.log(`Search query: ${query}`);
 
-app.post(`/search`, (req, res) => {
+    const versionsArray = [
+        req.body.version,
+        req.body.version2,
+        req.body.version3
+    ].filter(Boolean); // Filter out any falsy values to ignore unselected versions
+
+  // Join the versions array into a comma-separated string
+  const versions = versionsArray.join(',');
+  console.log(`Versions: ${versions}`);
+  try {
+      const { book, chapter, lines } = await parseCitationAsync(query);
+      console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
+      const getUrl = `/q/${versions}/${book}/${chapter}/${lines || ''}`;
+      console.log(`Redirecting to: ${getUrl}`);
+      res.status(200).json({ redirectUrl: getUrl });
+
+    } catch (error) {
+      console.error("Error occurred in /search:", error.message);
+      console.error("Stack trace:", error.stack);
+      res.status(500).json({ error: "error.message", details: error.message });
+  }
+});
+
+app.post(`/_search`,  (req, res) => {
     //const { query, version } = req.body;
     const { query } = req.body;
 
@@ -92,6 +117,7 @@ app.post(`/search`, (req, res) => {
 
   // Join the versions array into a comma-separated string
   const versions = versionsArray.join(',');
+  
 
     exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
         if (error) {
@@ -106,6 +132,7 @@ app.post(`/search`, (req, res) => {
         } else {
             if (req.xhr || req.headers.accept.includes('application/json')) {
                 // Send the quote as JSON for AJAX requests
+                console.log(`THIS PATH -> Quote: ${stdout}`);
                 res.json({ quote: stdout.trim() });
             } else {
                 // Render the index view with the search results for non-AJAX requests
@@ -130,11 +157,13 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
 app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
   const { version, book, chapter, verses } = req.params;
   let query = `${book} ${chapter}`;
+  
   if (verses) {
       query += `:${verses}`;
   }
+  console.log(`Query: ${query}`);
   const versions = version.split(',').join(',');
-
+  console.log(`Versions: ${versions}`);
   // Assuming you might have additional logic here, otherwise, this is essentially the same as the /api/q endpoint
   executeGbib(query, versions, (result) => {
       if (result.error) {
@@ -142,7 +171,9 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
           res.render('index', { basePath, bibles, results: result.error });
       } else {
           // Send response or render view as needed
-          res.render('index', { basePath, bibles, results: result.quote });
+          console.log(`Quote: ${result.quote}`);
+          //res.json({ quote: result.quote });
+          res.render('index', { basePath, bibles, results: result.quote});
       }
   });
 });

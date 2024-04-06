@@ -23,7 +23,7 @@
     <title>grepbible WebUI</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
-        var basePath = window.location.pathname;
+        var basePath = calculateBasePath();
         if (basePath.endsWith('/')) {
             basePath = basePath.slice(0, -1); // Remove trailing slash
         }
@@ -98,6 +98,30 @@
                 'Zephaniah': 3
             };
 
+            function calculateBasePath() {
+                const pathname = window.location.pathname;
+                // Create an array from the pathname, splitting at each slash, and filtering out empty strings
+                let pathSegments = pathname.split('/').filter(segment => segment.length > 0);
+
+                // Find the index of the segment that starts with "api" or "q"
+                const specialSegmentIndex = pathSegments.findIndex(segment => segment === "api" || segment === "q");
+
+                // If such a segment is found, keep only the segments before it; otherwise, use all segments
+                if (specialSegmentIndex !== -1) {
+                    pathSegments = pathSegments.slice(0, specialSegmentIndex);
+                }
+
+                // Reconstruct the pathname from the filtered segments
+                let basePath = '/' + pathSegments.join('/');
+
+                // Combine with the origin to get the full base URL
+                if (basePath.endsWith('/')) {
+                    basePath = basePath.slice(0, -1); // Remove trailing slash
+                }
+                return window.location.origin + basePath;
+
+            }
+
             function highlightText(fullText, searchText) {
                 // Escape HTML special characters in searchText to prevent XSS attacks if searchText is user-controlled
                 const escapedSearchText = searchText.replace(/[&<>"']/g, function(match) {
@@ -129,7 +153,7 @@
             }
 
             function parseAndDisplayCitation(citation) {
-                $.post(basePath + '/parse', { citation: citation }, function(data) {
+                $.post(calculateBasePath() + '/parse', { citation: citation }, function(data) {
                     if (data.error) {
                         console.error('Error parsing citation:', data.error);
                         console.error('Citation:', citation);
@@ -179,13 +203,23 @@
 
         //{ query: citationInputVal, version: versionSelected }
         $(document).ready(function() {
+            // if data is defined, display it as `$('#citation').html(ansiToHtml(data.quote));`
+            var results = "<%= results %>"; // This takes the server-side variable and makes it available client-side
+
+            if (results) {
+                $('#citation').html(ansiToHtml(results));
+            }
+
             $('#randomVerseBtn').click(function() {
                 var selectedVersion = $('#version').val();
-                $.get(basePath + '/random-verse-reference', function(_data) {
+                $.get(calculateBasePath() + '/random-verse-reference', function(_data) {
                     const reference = _data.reference;
                     const postData = getVersions(reference);
                     // Now use the /search API to get the quote for this reference
-                    $.post(basePath + '/search', postData, function(data) {
+                    $.post(calculateBasePath() + '/search', postData, function(data) {
+                        if(data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        }
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
                             $('#citation').text('Error fetching quote. Please try again.');
@@ -238,8 +272,11 @@
                 
                 // Collect input values
                 const postData = getVersions();
-                
-                $.post(basePath + '/search', postData, function(data) {
+
+                $.post(calculateBasePath() + '/search', postData, function(data) {
+                    if(data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
+                    }
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);
                         $('#citation').text('Error fetching quote. Please try again.');
@@ -264,7 +301,7 @@
                 }
 
                 // Send request to server to perform the search
-                $.post(basePath + '/search-text', { 
+                $.post(calculateBasePath() + '/search-text', { 
                     query: findText
                     , version: version
                     , caseInsensitive: caseInsensitive
