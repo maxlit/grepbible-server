@@ -203,8 +203,7 @@
 
         //{ query: citationInputVal, version: versionSelected }
         $(document).ready(function() {
-            // if data is defined, display it as `$('#citation').html(ansiToHtml(data.quote));`
-            var results = "<%= results %>"; // This takes the server-side variable and makes it available client-side
+            var results = <%- JSON.stringify(results) %>;
             
             if (results) {
                 $('#citation').html(ansiToHtml(results));

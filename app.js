@@ -121,7 +121,7 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
   if (verses) {
       query += `:${verses}`;
   }
-  const versions = version.split(',').join(',');
+  const versions = version.split(',');//.join(',');
   executeGbib(query, versions, (result) => res.json(result));
 });
 
@@ -134,7 +134,9 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
       query += `:${verses}`;
   }
   console.log(`Query: ${query}`);
-  const versions = version.split(',').join(',');
+  console.log(`Version: ${version}`);
+  const versions = version.split(','); //.join(',');
+  console.log(`Versions: ${versions}`);
 
   executeGbib(query, versions, (result) => {
       if (result.error) {
@@ -143,6 +145,7 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
       } else {
           // Send response or render view as needed
           console.log(`Quote: ${result.quote}`);
+
           //res.json({ quote: result.quote });
           res.render('index', { basePath, bibles, results: result.quote, reference: query});
       }
