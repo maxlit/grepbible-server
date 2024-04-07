@@ -16,8 +16,10 @@ function calculateServerBasePath(req) {
   const pathname = req.path;
   let pathSegments = pathname.split('/').filter(segment => segment.length > 0);
 
+  const specialSegments = ["api", "q", "search", "search-text"];
+
   // Find the index of the segment that starts with "api" or "q"
-  const specialSegmentIndex = pathSegments.findIndex(segment => segment === "api" || segment === "q");
+  const specialSegmentIndex = pathSegments.findIndex(segment => specialSegments.includes(segment));
 
   // If such a segment is found, keep only the segments before it; otherwise, use all segments
   if (specialSegmentIndex !== -1) {
@@ -31,8 +33,8 @@ function calculateServerBasePath(req) {
   // Note: req.baseUrl contains the URL path on which a particular router instance was mounted
   const fullBaseUrl = req.protocol + '://' + req.get('host') + req.baseUrl;
 
-  if (!basePath.endsWith('/')) {
-      basePath += '/'; // Ensure there's a trailing slash for consistency
+  if (basePath.endsWith('/')) {
+    basePath = basePath.slice(0, -1); // Remove trailing slash
   }
 
   return fullBaseUrl + basePath;
@@ -133,6 +135,7 @@ app.post(`/search`,  async (req, res) => {
       const { book, chapter, lines } = await parseCitationAsync(query);
       console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
       let basePath = calculateServerBasePath(req);
+      console.log(`Base path: ${basePath}`);
       const getUrl = basePath + `/q/${versions}/${book}/${chapter}/${lines || ''}`;
       res.status(200).json({ redirectUrl: getUrl });
 
@@ -167,8 +170,8 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
   console.log(`Versions: ${versions}`);
 
   executeGbib(query, versions, (result) => {
+      let basePath = calculateServerBasePath(req);
       if (result.error) {
-          let basePath = calculateServerBasePath(req);
           // Handle error for non-AJAX requests differently if necessary
           res.render('index', { basePath, bibles, results: result.error, reference: '', versions: versions});
       } else {
