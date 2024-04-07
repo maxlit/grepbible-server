@@ -142,6 +142,20 @@
                 return highlighted;
             }
 
+            function cleanRedirectUrl(redirectUrl) {
+                let splits = redirectUrl.split('/');
+
+                const basePathSegment = window.location.pathname.split('/')[1];
+
+                const pathSegments = redirectUrl.split('/');
+                if (pathSegments.length > 2) {
+                    if (splits[0] === splits[1] && splits[0] === basePathSegment){
+                        return splits.slice(1).join('/');
+                    }
+                }
+                return redirectUrl;
+            }
+
             function ansiToHtml(text) {
                 // Convert ANSI dark green text to HTML
                 const darkGreenTextHtml = text.replace(/\u001b\[32m/g, '<br><span style="color:darkgreen;">');
@@ -238,7 +252,9 @@
                     $.post(calculateBasePath() + '/search', postData, function(data) {
                         if(data.redirectUrl) {
                             console.log('ready::randomVerseBtn::Redirecting to:', data.redirectUrl);
-                            window.location.href = data.redirectUrl;
+                            const redirectUrl = cleanRedirectUrl(data.redirectUrl);
+                            console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
+                            window.location.href = redirectUrl;
                         }
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
