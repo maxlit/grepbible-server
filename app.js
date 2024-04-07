@@ -13,7 +13,7 @@ const basePath = process.env.BASE_PATH || ''; // Default to no base path if not 
 let bibles = []; // Initialize bibles list
 
 function calculateServerBasePath(req) {
-  return req.get('host') + '/' + basePath;
+  return basePath;
 }
 
 // Function to update the available Bibles list
