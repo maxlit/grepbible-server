@@ -8,9 +8,36 @@ const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 app.use(cors());
 app.use(express.json());
 
-const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
+//const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
 let bibles = []; // Initialize bibles list
+
+function calculateServerBasePath(req) {
+  const pathname = req.path;
+  let pathSegments = pathname.split('/').filter(segment => segment.length > 0);
+
+  // Find the index of the segment that starts with "api" or "q"
+  const specialSegmentIndex = pathSegments.findIndex(segment => segment === "api" || segment === "q");
+
+  // If such a segment is found, keep only the segments before it; otherwise, use all segments
+  if (specialSegmentIndex !== -1) {
+      pathSegments = pathSegments.slice(0, specialSegmentIndex);
+  }
+
+  // Reconstruct the pathname from the filtered segments
+  let basePath = '/' + pathSegments.join('/');
+
+  // Combine with the request's base URL to get the full base URL
+  // Note: req.baseUrl contains the URL path on which a particular router instance was mounted
+  const fullBaseUrl = req.protocol + '://' + req.get('host') + req.baseUrl;
+
+  if (!basePath.endsWith('/')) {
+      basePath += '/'; // Ensure there's a trailing slash for consistency
+  }
+
+  return fullBaseUrl + basePath;
+}
+
 
 // Function to update the available Bibles list
 function updateAvailableBibles() {
@@ -71,6 +98,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
+  let basePath = calculateServerBasePath(req);
   res.render('index', { basePath, bibles, results: '', reference: '', versions: ['kj'] }); // Pass the bibles list to the view
 });
 
@@ -104,6 +132,7 @@ app.post(`/search`,  async (req, res) => {
   try {
       const { book, chapter, lines } = await parseCitationAsync(query);
       console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
+      let basePath = calculateServerBasePath(req);
       const getUrl = basePath + `/q/${versions}/${book}/${chapter}/${lines || ''}`;
       res.status(200).json({ redirectUrl: getUrl });
 
@@ -139,6 +168,7 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
 
   executeGbib(query, versions, (result) => {
       if (result.error) {
+          let basePath = calculateServerBasePath(req);
           // Handle error for non-AJAX requests differently if necessary
           res.render('index', { basePath, bibles, results: result.error, reference: '', versions: versions});
       } else {

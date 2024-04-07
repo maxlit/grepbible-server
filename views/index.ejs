@@ -234,6 +234,7 @@
                     // Now use the /search API to get the quote for this reference
                     $.post(calculateBasePath() + '/search', postData, function(data) {
                         if(data.redirectUrl) {
+                            console.log('ready::randomVerseBtn::Redirecting to:', data.redirectUrl);
                             window.location.href = data.redirectUrl;
                         }
                         if (data.error) {
