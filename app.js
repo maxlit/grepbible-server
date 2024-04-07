@@ -104,7 +104,7 @@ app.post(`/search`,  async (req, res) => {
   try {
       const { book, chapter, lines } = await parseCitationAsync(query);
       console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
-      const getUrl = `/q/${versions}/${book}/${chapter}/${lines || ''}`;
+      const getUrl = basePath + `/q/${versions}/${book}/${chapter}/${lines || ''}`;
       res.status(200).json({ redirectUrl: getUrl });
 
     } catch (error) {
