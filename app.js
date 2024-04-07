@@ -8,38 +8,13 @@ const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 app.use(cors());
 app.use(express.json());
 
-//const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
+const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
 let bibles = []; // Initialize bibles list
 
 function calculateServerBasePath(req) {
-  const pathname = req.path;
-  let pathSegments = pathname.split('/').filter(segment => segment.length > 0);
-
-  const specialSegments = ["api", "q", "search", "search-text"];
-
-  // Find the index of the segment that starts with "api" or "q"
-  const specialSegmentIndex = pathSegments.findIndex(segment => specialSegments.includes(segment));
-
-  // If such a segment is found, keep only the segments before it; otherwise, use all segments
-  if (specialSegmentIndex !== -1) {
-      pathSegments = pathSegments.slice(0, specialSegmentIndex);
-  }
-
-  // Reconstruct the pathname from the filtered segments
-  let basePath = '/' + pathSegments.join('/');
-
-  // Combine with the request's base URL to get the full base URL
-  // Note: req.baseUrl contains the URL path on which a particular router instance was mounted
-  const fullBaseUrl = req.protocol + '://' + req.get('host') + req.baseUrl;
-
-  if (basePath.endsWith('/')) {
-    basePath = basePath.slice(0, -1); // Remove trailing slash
-  }
-
-  return fullBaseUrl + basePath;
+  return req.get('host') + '/' + basePath;
 }
-
 
 // Function to update the available Bibles list
 function updateAvailableBibles() {
