@@ -97,3 +97,28 @@ release-docker:
     - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}
     - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest
   when: manual
+
+release-docker-prod:
+  stage: release
+  image: docker:20.10.24
+  services:
+    - docker:20.10.24-dind
+  only:
+    - tags
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_IMAGE_NAME: "grepbible-server"
+    PROD_DOCKERFILE: "Dockerfile.prod"
+  script:
+    - echo "Building Production Docker Image..."
+    - echo "Docker Hub Username ${DOCKER_HUB_USERNAME}"
+    - docker info
+    - docker build -f ${PROD_DOCKERFILE} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-${CI_COMMIT_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-latest .
+    - echo $DOCKER_HUB_ACCESS_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+    - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-${CI_COMMIT_TAG}
+    - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-latest
+  needs:
+    - "update-version"
+    - "release-docker"
+  when: manual
