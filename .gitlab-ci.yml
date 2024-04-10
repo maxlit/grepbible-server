@@ -121,4 +121,3 @@ release-docker-prod:
   needs:
     - "update-version"
     - "release-docker"
-  when: manual
