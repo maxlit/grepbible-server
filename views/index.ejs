@@ -252,10 +252,8 @@
                     // Now use the /search API to get the quote for this reference
                     $.post(calculateBasePath() + '/search', postData, function(data) {
                         if(data.redirectUrl) {
-                            console.log('ready::randomVerseBtn::Redirecting to:', data.redirectUrl);
                             let redirectUrl = cleanRedirectUrl(data.redirectUrl);
                             console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
-                            console.log('ready::randomVerseBtn::calculateBasePath:', calculateBasePath());
                             console.log('redirect to:', calculateBasePath()  + redirectUrl);
                             // prepend '/' to redirect if not the first symbol
                             if (redirectUrl[0] !== '/') {
@@ -312,9 +310,8 @@
 
                 $.post(calculateBasePath() + '/search', postData, function(data) {
                     if(data.redirectUrl) {
-                        console.log('ready::findQuoteBtn::1.Redirecting to:', data.redirectUrl);
                         let redirectUrl = cleanRedirectUrl(data.redirectUrl);
-                        console.log('ready::findQuoteBtn::2.Redirecting to:', redirectUrl);
+                        console.log('ready::findQuoteBtn:: Redirecting to:', redirectUrl);
                         if (redirectUrl[0] !== '/') {
                                 redirectUrl = '/' + redirectUrl;
                             }

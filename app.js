@@ -31,7 +31,8 @@ function updateAvailableBibles() {
   });
 }
 
-function processGrepOutput(grepOutput, version, basePath) {
+function processGrepOutput(grepOutput, version, req) {
+  let basePath = calculateServerBasePath(req);
   const lines = grepOutput.split('\n').filter(line => line.trim());
   const htmlLines = lines.map(line => {
       const match = line.match(/.*\/([^\/]+)\/(\d+)\.txt:(\d+):(.*)/);
@@ -41,7 +42,16 @@ function processGrepOutput(grepOutput, version, basePath) {
       }
 
       const [, book, chapter, verse, text] = match;
-      const url = `${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
+      const protocol = req.protocol;
+      let host = req.get('host');
+      //remove last character from if it is a slash
+      let url = '';
+      if (basePath == '') {
+        url = `${protocol}://${host}/q/${version}/${book}/${chapter}/${verse || ''}`;
+      } else {
+        url = `${protocol}://${host}/${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
+      }
+      
       return `<b><a href="${url}">${book} ${chapter}:${verse}</a></b> ${text}`;
   });
 
@@ -189,7 +199,7 @@ app.post(`/search-text`, (req, res) => {
       return res.json({ error: "Error performing search." });
     }
     console.log(`stdout: ${stdout}`);
-    res.json({ results: processGrepOutput(stdout, version, calculateServerBasePath(req)) || "No results found." });
+    res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
   });
 });
 
