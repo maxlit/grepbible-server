@@ -98,8 +98,9 @@
                 'Zephaniah': 3
             };
             function calculateBasePath() {
-                const pathname = window.location.pathname;
+                let pathname = window.location.pathname;
                 console.log('calculateBasePath::pathname:', pathname);
+                if (pathname == '/') pathname = '';
                 return _calculateBasePath(pathname);
             }
             function _calculateBasePath(pathname) {
@@ -149,7 +150,7 @@
 
                 const pathSegments = redirectUrl.split('/');
                 if (pathSegments.length > 2) {
-                    if (splits[0] === splits[1] && splits[0] === basePathSegment){
+                    if (splits[0] === splits[1] || (splits[0] === basePathSegment)) {
                         return splits.slice(1).join('/');
                     }
                 }
@@ -252,9 +253,15 @@
                     $.post(calculateBasePath() + '/search', postData, function(data) {
                         if(data.redirectUrl) {
                             console.log('ready::randomVerseBtn::Redirecting to:', data.redirectUrl);
-                            const redirectUrl = cleanRedirectUrl(data.redirectUrl);
+                            let redirectUrl = cleanRedirectUrl(data.redirectUrl);
                             console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
-                            window.location.href = redirectUrl;
+                            console.log('ready::randomVerseBtn::calculateBasePath:', calculateBasePath());
+                            console.log('redirect to:', calculateBasePath()  + redirectUrl);
+                            // prepend '/' to redirect if not the first symbol
+                            if (redirectUrl[0] !== '/') {
+                                redirectUrl = '/' + redirectUrl;
+                            }
+                            window.location.href = calculateBasePath()  + redirectUrl;
                         }
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
@@ -305,7 +312,13 @@
 
                 $.post(calculateBasePath() + '/search', postData, function(data) {
                     if(data.redirectUrl) {
-                        window.location.href = data.redirectUrl;
+                        console.log('ready::findQuoteBtn::1.Redirecting to:', data.redirectUrl);
+                        let redirectUrl = cleanRedirectUrl(data.redirectUrl);
+                        console.log('ready::findQuoteBtn::2.Redirecting to:', redirectUrl);
+                        if (redirectUrl[0] !== '/') {
+                                redirectUrl = '/' + redirectUrl;
+                            }
+                        window.location.href = calculateBasePath()  +  redirectUrl;
                     }
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);

@@ -31,7 +31,7 @@ function updateAvailableBibles() {
   });
 }
 
-function processGrepOutput(grepOutput, version) {
+function processGrepOutput(grepOutput, version, basePath) {
   const lines = grepOutput.split('\n').filter(line => line.trim());
   const htmlLines = lines.map(line => {
       const match = line.match(/.*\/([^\/]+)\/(\d+)\.txt:(\d+):(.*)/);
@@ -41,7 +41,7 @@ function processGrepOutput(grepOutput, version) {
       }
 
       const [, book, chapter, verse, text] = match;
-      const url = `/q/${version}/${book}/${chapter}/${verse || ''}`;
+      const url = `${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
       return `<b><a href="${url}">${book} ${chapter}:${verse}</a></b> ${text}`;
   });
 
@@ -189,7 +189,7 @@ app.post(`/search-text`, (req, res) => {
       return res.json({ error: "Error performing search." });
     }
     console.log(`stdout: ${stdout}`);
-    res.json({ results: processGrepOutput(stdout, version) || "No results found." });
+    res.json({ results: processGrepOutput(stdout, version, calculateServerBasePath(req)) || "No results found." });
   });
 });
 
