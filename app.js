@@ -1,12 +1,15 @@
 const express = require('express');
+
 const bodyParser = require('body-parser');
 const { exec, execFile } = require('child_process');
 const app = express();
+const path = require('path');
 const cors = require('cors');
 const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 
 app.use(cors());
 app.use(express.json());
+app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
 
 const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
@@ -86,7 +89,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   let basePath = calculateServerBasePath(req);
-  res.render('index', { basePath, bibles, results: '', reference: '', versions: ['kj'] }); // Pass the bibles list to the view
+  res.render('index', { basePath, bibles, results: '', reference: '', versions: ['kj'], BOOK2CHAPTERS }); // Pass the bibles list to the view
 });
 
 app.get(`/random-verse-reference`, (req, res) => {
@@ -158,13 +161,13 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
       let basePath = calculateServerBasePath(req);
       if (result.error) {
           // Handle error for non-AJAX requests differently if necessary
-          res.render('index', { basePath, bibles, results: result.error, reference: '', versions: versions});
+          res.render('index', { basePath, bibles, results: result.error, reference: '', versions: versions, BOOK2CHAPTERS});
       } else {
           // Send response or render view as needed
           console.log(`Quote: ${result.quote}`);
 
           //res.json({ quote: result.quote });
-          res.render('index', { basePath, bibles, results: result.quote, reference: query, versions: versions});
+          res.render('index', { basePath, bibles, results: result.quote, reference: query, versions: versions, BOOK2CHAPTERS});
       }
   });
 });
