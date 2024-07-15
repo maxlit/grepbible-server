@@ -238,10 +238,7 @@
             Object.keys(BOOK2CHAPTERS).forEach(book => {
                 bookSelect.append(`<option value="${book}">${book}</option>`);
             });
-
-            $('#findQuoteBtn').on('click', function(event) {
-                event.preventDefault(); // Prevent default button action, important if it's a submit button
-                
+            function search() {
                 // Collect input values
                 const postData = getVersions();
 
@@ -265,8 +262,18 @@
                 
                 // Optionally, if you need to parse and display citation details based on `postData`
                 //parseAndDisplayCitation(postData.query);
+            }
+            $('#findQuoteBtn').on('click', function(event) {
+                event.preventDefault() // Prevent default button action, important if it's a submit button
+                search()
             });
-
+            $('#citationInput').keypress(function(event) {
+                if (event.keyCode === 13) {
+                    search()
+                }
+            })
+            $('#version2').change(search)
+            $('#version3').change(search)
 
             $('#findButton').click(function() {
                 $('#citation').html('');
