@@ -30,7 +30,7 @@ ENV LOCAL_BIBLE_DIR=/root/grepbible_data
 ENV PATH="${PATH}:/root/.local/bin"
 
 # Download a few Bibles
-RUN gbib -d kj,vg,de
+RUN gbib -d kj,vg,de,po-BR,pl,ru,he
 
 # Copy the rest of the application
 COPY . .
