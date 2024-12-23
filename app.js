@@ -16,6 +16,8 @@ const basePath = process.env.BASE_PATH || ''; // Default to no base path if not 
 let bibles = []; // Initialize bibles list
 
 function calculateServerBasePath(req) {
+  console.log('calculateServerBasePath called with path:', req.path);
+  console.log('basePath value:', basePath);
   return basePath;
 }
 
@@ -93,14 +95,15 @@ app.get('/', (req, res) => {
 });
 
 app.get(`/random-verse-reference`, (req, res) => {
+    console.log('Random verse reference endpoint called');
+    console.log('Request path:', req.path);
     exec('gbib -r', (error, stdout, stderr) => {
         if (error) {
             console.error(`exec error: ${error}`);
             res.status(500).send("Error retrieving random verse reference.");
         } else {
-            // Assuming the first line contains the reference
             const reference = stdout.split('\n')[0].trim();
-            console.log(`app::random-verse-reference::Random verse reference: ${reference}`);
+            console.log(`Random verse reference generated: ${reference}`);
             res.json({ reference });
         }
     });
@@ -172,7 +175,19 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
   });
 });
 
-
+app.get('/bible/:version', (req, res) => {
+    const version = req.params.version;
+    const basePath = calculateServerBasePath(req);
+    console.log('Calculated basePath:', basePath);
+    res.render('index', {
+        BOOK2CHAPTERS,
+        bibles,
+        basePath,
+        results: null,
+        reference: '',
+        versions: [version]
+    });
+});
 
 app.post(`/search-text`, (req, res) => {
   const { query, version, caseInsensitive, wholeWords } = req.body;
