@@ -175,7 +175,7 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
   });
 });
 
-app.get('/bible/:version', (req, res) => {
+app.get('/version/:version', (req, res) => {
     const version = req.params.version;
     const basePath = calculateServerBasePath(req);
     console.log('Calculated basePath:', basePath);

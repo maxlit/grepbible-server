@@ -36,7 +36,7 @@
             // Add this new code to get the version from URL
             function getDefaultVersionFromUrl() {
                 const pathname = window.location.pathname;
-                const matches = pathname.match(/\/bible\/([^\/]+)/);
+                const matches = pathname.match(/\/version\/([^\/]+)/);
                 return matches ? matches[1] : 'kj'; // Default to 'kj' if no version specified
             }
             const defaultVersion = getDefaultVersionFromUrl();
@@ -54,11 +54,11 @@
                 // Create an array from the pathname, splitting at each slash, and filtering out empty strings
                 let pathSegments = pathname.split('/').filter(segment => segment.length > 0);
 
-                // Find the index of the segment that starts with "api", "q", or "bible"
+                // Find the index of the segment that starts with "api", "q", or "version"
                 const specialSegmentIndex = pathSegments.findIndex(segment => 
                     segment === "api" || 
                     segment === "q" || 
-                    segment === "bible"  // Add "bible" to the special segments
+                    segment === "version"
                 );
 
                 // If such a segment is found, keep only the segments before it; otherwise, use all segments
