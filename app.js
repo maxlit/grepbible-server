@@ -150,29 +150,39 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
 
 // New GET endpoint for search functionality
 app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
-  const { version, book, chapter, verses } = req.params;
-  let query = `${book} ${chapter}`;
-  
-  if (verses) {
-      query += `:${verses}`;
-  }
+    const { version, book, chapter, verses } = req.params;
+    let query = `${book} ${chapter}`;
+    
+    if (verses) {
+        query += `:${verses}`;
+    }
 
-  const versions = version.split(','); //.join(',');
-  console.log(`Versions: ${versions}`);
+    const versions = version.split(',');
+    console.log(`Versions: ${versions}`);
 
-  executeGbib(query, versions, (result) => {
-      let basePath = calculateServerBasePath(req);
-      if (result.error) {
-          // Handle error for non-AJAX requests differently if necessary
-          res.render('index', { basePath, bibles, results: result.error, reference: '', versions: versions, BOOK2CHAPTERS});
-      } else {
-          // Send response or render view as needed
-          console.log(`Quote: ${result.quote}`);
-
-          //res.json({ quote: result.quote });
-          res.render('index', { basePath, bibles, results: result.quote, reference: query, versions: versions, BOOK2CHAPTERS});
-      }
-  });
+    executeGbib(query, versions, (result) => {
+        let basePath = calculateServerBasePath(req);
+        if (result.error) {
+            res.render('index', { 
+                basePath, 
+                bibles, 
+                results: result.error, 
+                reference: '', 
+                versions: versions, 
+                BOOK2CHAPTERS
+            });
+        } else {
+            // Instead of rendering the full page, just send the quote
+            res.render('index', { 
+                basePath, 
+                bibles, 
+                results: result.quote,  // This is the quote text
+                reference: query, 
+                versions: versions, 
+                BOOK2CHAPTERS
+            });
+        }
+    });
 });
 
 app.get('/version/:version', (req, res) => {
