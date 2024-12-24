@@ -13,3 +13,5 @@ npm-debug.log*
 
 # Optional eslint cache
 .eslintcache
+
+scripts/
