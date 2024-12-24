@@ -228,7 +228,7 @@
             function updateCitation() {
                 const selectedBook = $('#book').find(":selected").text();
                 const selectedChapter = $('#chapter').find(":selected").val();
-                const updatedCitation = `${selectedBook} ${selectedChapter}:1`; // Assuming verse 1 as default
+                const updatedCitation = `${selectedBook} ${selectedChapter}`; // Only include book and chapter
                 $('#citationInput').val(updatedCitation);
             }
 
