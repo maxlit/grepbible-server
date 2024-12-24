@@ -380,7 +380,7 @@
 <body>
     <h1>grepbible WebUI</h1>
     <div style="margin-top: 20px;">
-        <p>A WebUI for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
+        <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
         <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
     </div>
     <hr>
@@ -454,11 +454,5 @@
     </div>
     <hr>
     <div id="citation"></div>
-    <% if (process.env.GIT_VERSION) { %>
-        <hr>
-        <div style="text-align: center; font-size: small; color: gray; margin-top: 20px;">
-            <%= process.env.GIT_VERSION %>
-        </div>
-    <% } %>
 </body>
 </html>
