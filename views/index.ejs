@@ -108,16 +108,21 @@
             }
 
             function ansiToHtml(text) {
-                // Convert ANSI dark green text to HTML
-                const darkGreenTextHtml = text.replace(/\u001b\[32m/g, '<br><span style="color:darkgreen;">');
-
-                // Convert ANSI orange text to HTML (note: there's no exact 'orange' in basic HTML colors, 'orange' is used for demonstration)
-                const orangeTextHtml = darkGreenTextHtml.replace(/\u001b\[33m/g, '<br><span style="color:orange;">');
-
-                // Reset ANSI formatting to default
-                const resetFormattingHtml = orangeTextHtml.replace(/\u001b\[0m/g, '</span>');
-
-                return resetFormattingHtml;
+                // Split text into lines first
+                const lines = text.split('\n').filter(line => line.trim());
+                
+                return lines.map(line => {
+                    if (line.includes('\u001b[')) {
+                        // Handle ANSI-colored text
+                        return line
+                            .replace(/\u001b\[32m/g, '<br><span style="color:darkgreen;">')
+                            .replace(/\u001b\[33m/g, '<br><span style="color:orange;">')
+                            .replace(/\u001b\[0m/g, '</span>');
+                    } else {
+                        // Handle plain text with black color
+                        return `<br><span style="color:black;">${line}</span>`;
+                    }
+                }).join('').replace(/^<br>/, ''); // Remove the first <br> if it exists
             }
 
             function parseAndDisplayCitation(citation, versions = ['kj']) {
@@ -182,7 +187,7 @@
             var results = <%- JSON.stringify(results) %>;
             
             if (results) {
-                $('#citation').html(ansiToHtml(results));
+                $('#citation').empty().html(ansiToHtml(results));
             }
 
             // Set the default version based on URL
