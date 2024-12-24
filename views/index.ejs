@@ -302,6 +302,11 @@
                     search()
                 }
             })
+            $('#findText').keypress(function(event) {
+                if (event.keyCode === 13) {  // 13 is the Enter key
+                    $('#findButton').click();  // Trigger the find button click
+                }
+            });
             $('#version2').change(search)
             $('#version3').change(search)
 
@@ -328,6 +333,17 @@
                     $('#citation').text('Error performing search. Please try again.');
                 });
             });
+
+            // Set initial versions in dropdowns
+            if (versions && versions.length > 0) {
+                $('#version').val(versions[0]);  // First version
+                if (versions.length > 1) {
+                    $('#version2').val(versions[1]);  // Second version
+                }
+                if (versions.length > 2) {
+                    $('#version3').val(versions[2]);  // Third version
+                }
+            }
         });
     </script>
 </head>

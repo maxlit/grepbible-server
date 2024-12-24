@@ -186,16 +186,18 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
 });
 
 app.get('/version/:version', (req, res) => {
-    const version = req.params.version;
+    const versions = req.params.version.split(',').filter(v => v); // Split by comma and remove empty strings
     const basePath = calculateServerBasePath(req);
     console.log('Calculated basePath:', basePath);
+    console.log('Versions:', versions);
+    
     res.render('index', {
         BOOK2CHAPTERS,
         bibles,
         basePath,
         results: null,
         reference: '',
-        versions: [version]
+        versions: versions  // Pass array of versions to the template
     });
 });
 
