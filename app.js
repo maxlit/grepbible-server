@@ -6,6 +6,7 @@ const app = express();
 const path = require('path');
 const cors = require('cors');
 const BOOK2CHAPTERS = require('./src/scripts/constants.js');
+require('dotenv').config();
 
 app.use(cors());
 app.use(express.json());

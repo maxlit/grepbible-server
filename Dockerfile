@@ -35,6 +35,9 @@ RUN gbib -d kj,vg,de,po-BR,pl,ru,he
 # Copy the rest of the application
 COPY . .
 
+# Set GIT_VERSION environment variable during build
+RUN echo "GIT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo 'dev') ($(date +%d.%m.%Y))" > /usr/src/app/.env
+
 # Expose port (adjust if different)
 EXPOSE 4628
 

@@ -454,5 +454,11 @@
     </div>
     <hr>
     <div id="citation"></div>
+    <% if (process.env.GIT_VERSION) { %>
+        <hr>
+        <div style="text-align: center; font-size: small; color: gray; margin-top: 20px;">
+            <%= process.env.GIT_VERSION %>
+        </div>
+    <% } %>
 </body>
 </html>
