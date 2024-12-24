@@ -60,4 +60,19 @@ describe('Text Search', () => {
         // Should not match words that just contain "molten" as a substring
         expect(response.body.results).not.toContain('unmolten');
     });
+
+    test('GET /f/:version/:text should return search results', async () => {
+        const response = await request(app)
+            .get('/f/kj/molten')
+            .expect(200);
+
+        // Check that response contains the search text
+        expect(response.text).toContain('molten');
+        
+        // Should contain a known verse with "molten"
+        expect(response.text).toContain('Iron is taken out of the earth, and brass is molten out of the stone');
+        
+        // Should have the search text in the input field
+        expect(response.text).toContain('value="molten"');
+    });
 }); 

@@ -202,22 +202,26 @@
             }
             
             $('#randomVerseBtn').click(function() {
-                $.get(calculateBasePath() + '/random-verse-reference', function(_data) {
+                // Get the original base path without /f/... part
+                const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
+                
+                $.get(originalBasePath + '/random-verse-reference', function(_data) {
                     console.log('Random verse response received:', _data);
                     const _reference = _data.reference;
                     console.log('Random verse reference:', _reference);
                     const postData = getVersions(_reference);
-                    // Now use the /search API to get the quote for this reference
-                    $.post(calculateBasePath() + '/search', postData, function(data) {
+                    
+                    // Use the original base path for the search request
+                    $.post(originalBasePath + '/search', postData, function(data) {
                         if(data.redirectUrl) {
                             let redirectUrl = cleanRedirectUrl(data.redirectUrl);
                             console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
-                            console.log('redirect to:', calculateBasePath()  + redirectUrl);
+                            console.log('redirect to:', originalBasePath + redirectUrl);
                             // prepend '/' to redirect if not the first symbol
                             if (redirectUrl[0] !== '/') {
                                 redirectUrl = '/' + redirectUrl;
                             }
-                            window.location.href = calculateBasePath()  + redirectUrl;
+                            window.location.href = originalBasePath + redirectUrl;
                         }
                         if (data.error) {
                             console.error('Error fetching quote:', data.error);
@@ -269,17 +273,20 @@
                 bookSelect.append(`<option value="${book}">${book}</option>`);
             });
             function search() {
+                // Get the original base path without /f/... part
+                const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
+                
                 // Collect input values
                 const postData = getVersions();
 
-                $.post(calculateBasePath() + '/search', postData, function(data) {
+                $.post(originalBasePath + '/search', postData, function(data) {
                     if(data.redirectUrl) {
                         let redirectUrl = cleanRedirectUrl(data.redirectUrl);
                         console.log('ready::findQuoteBtn:: Redirecting to:', redirectUrl);
                         if (redirectUrl[0] !== '/') {
-                                redirectUrl = '/' + redirectUrl;
-                            }
-                        window.location.href = calculateBasePath()  +  redirectUrl;
+                            redirectUrl = '/' + redirectUrl;
+                        }
+                        window.location.href = originalBasePath + redirectUrl;
                     }
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);
@@ -289,49 +296,72 @@
                         $('#citation').html(ansiToHtml(data.quote));
                     }
                 }, 'json');
-                
-                // Optionally, if you need to parse and display citation details based on `postData`
-                //parseAndDisplayCitation(postData.query);
             }
             $('#findQuoteBtn').on('click', function(event) {
                 event.preventDefault() // Prevent default button action, important if it's a submit button
                 search()
             });
-            $('#citationInput').keypress(function(event) {
-                if (event.keyCode === 13) {
-                    search()
-                }
-            })
             $('#findText').keypress(function(event) {
                 if (event.keyCode === 13) {  // 13 is the Enter key
-                    $('#findButton').click();  // Trigger the find button click
+                    performTextSearch();
+                }
+            });
+            $('#citationInput').keypress(function(event) {
+                if (event.keyCode === 13) {
+                    search();
                 }
             });
             $('#version2').change(search)
             $('#version3').change(search)
 
             $('#findButton').click(function() {
+                performTextSearch();
+            });
+
+            function performTextSearch() {
                 $('#citation').html('');
                 const findText = $('#findText').val();
                 const version = $('#version').val();
                 const caseInsensitive = $('#caseInsensitive').is(':checked');
                 const wholeWords = $('#wholeWords').is(':checked');
+                
                 if (!findText.trim()) {
                     alert('Please enter text to find.');
                     return;
                 }
 
-                // Send request to server to perform the search
-                $.post(calculateBasePath() + '/search-text', { 
-                    query: findText
-                    , version: version
-                    , caseInsensitive: caseInsensitive
-                    , wholeWords: wholeWords
+                // Store the original base path before modifying URL
+                const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
+
+                // Update URL
+                const newUrl = `${originalBasePath}/f/${version}/${encodeURIComponent(findText)}`;
+                window.history.pushState({ type: 'textSearch' }, '', newUrl);
+
+                // Use the original base path for the AJAX request
+                $.post(originalBasePath + '/search-text', { 
+                    query: findText,
+                    version: version,
+                    caseInsensitive: caseInsensitive,
+                    wholeWords: wholeWords
                 }, function(data) {
                     $('#citation').html(highlightText(data.results, findText) || 'No results found.');
                 }).fail(function() {
                     $('#citation').text('Error performing search. Please try again.');
                 });
+            }
+
+            // Add popstate event handler to handle browser back/forward
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.type === 'textSearch') {
+                    // Extract version and text from URL
+                    const match = window.location.pathname.match(/\/f\/([^\/]+)\/(.+)$/);
+                    if (match) {
+                        const [, version, text] = match;
+                        $('#version').val(version);
+                        $('#findText').val(decodeURIComponent(text));
+                        performTextSearch();
+                    }
+                }
             });
 
             // Set initial versions in dropdowns
@@ -412,12 +442,13 @@
         <div>
             <br>
             <label for="findText">Find text:</label>
-            <input type="text" id="findText" name="findText" placeholder="Enter text to find" />
-            <button type="button" id="findButton">Find</button>
-                <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
-                <label for="caseInsensitive">case-insensitive</label>
-                <input type="checkbox" id="wholeWords" name="wholeWords">
-                <label for="wholeWords">whole words</label>
+            <input type="text" id="findText" placeholder="Enter text to find" value="<%= locals.searchText || '' %>"/>
+            <button id="findButton">Find</button>
+            <br>
+            <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
+            <label for="caseInsensitive">Case insensitive</label>
+            <input type="checkbox" id="wholeWords" name="wholeWords">
+            <label for="wholeWords">Whole words</label>
         </div>
 
     </div>

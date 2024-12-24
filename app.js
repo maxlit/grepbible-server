@@ -266,4 +266,51 @@ app.post(`/parse`, async (req, res) => {
   }
 });
 
+// Add new GET endpoint for text search
+app.get('/f/:version/:text', (req, res) => {
+    const { version, text } = req.params;
+    const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
+    const versionDir = `${localBibleDir}/${version}`;
+
+    // Use the same grep options as in the POST endpoint
+    const args = ['-nr', text, versionDir];
+
+    execFile('grep', args, (error, stdout, stderr) => {
+        let basePath = calculateServerBasePath(req);
+        if (error && error.code !== 1) {  // grep returns 1 when no matches found
+            console.error(`exec error: ${error}`);
+            res.render('index', { 
+                basePath, 
+                bibles, 
+                results: "Error performing search.", 
+                reference: '', 
+                versions: [version], 
+                BOOK2CHAPTERS,
+                searchText: text  // Pass the search text to highlight it
+            });
+        } else if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            res.render('index', { 
+                basePath, 
+                bibles, 
+                results: "Error performing search.", 
+                reference: '', 
+                versions: [version], 
+                BOOK2CHAPTERS,
+                searchText: text
+            });
+        } else {
+            res.render('index', { 
+                basePath, 
+                bibles, 
+                results: processGrepOutput(stdout, version, req) || "No results found.", 
+                reference: '', 
+                versions: [version], 
+                BOOK2CHAPTERS,
+                searchText: text
+            });
+        }
+    });
+});
+
 module.exports = app; // Make sure this is at the end of app.js
