@@ -146,7 +146,7 @@
                     }
 
                     // Handle line display; assuming 'data.lines' is an array of selected line numbers
-                    $('#line').text(data.lines && data.lines.length > 0 ? `Lines: ${data.lines.join(", ")}` : 'Select a line');
+                    $('#line').text(data.lines && data.lines.length > 0 ? `${data.lines.join(", ")}` : 'Select a line');
                 }, 'json');
                 $('#version').val(versions[0]);
                 if (versions.length > 1) {
@@ -248,11 +248,19 @@
                 }
                 // Update citation after changing book (and resetting chapters)
                 updateCitation();
+                // Trigger search if a valid book is selected
+                if (selectedBook) {
+                    search();
+                }
             });
 
             $('#chapter').change(function() {
                 // Update citation when chapter changes
                 updateCitation();
+                // Trigger search if a chapter is selected
+                if ($(this).val()) {
+                    search();
+                }
             });
             
             // Populate the book dropdown
