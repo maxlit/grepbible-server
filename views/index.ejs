@@ -108,16 +108,22 @@
             }
 
             function ansiToHtml(text) {
-                // Convert ANSI dark green text to HTML
-                const darkGreenTextHtml = text.replace(/\u001b\[32m/g, '<br><span style="color:darkgreen;">');
-
-                // Convert ANSI orange text to HTML (note: there's no exact 'orange' in basic HTML colors, 'orange' is used for demonstration)
-                const orangeTextHtml = darkGreenTextHtml.replace(/\u001b\[33m/g, '<br><span style="color:orange;">');
-
-                // Reset ANSI formatting to default
-                const resetFormattingHtml = orangeTextHtml.replace(/\u001b\[0m/g, '</span>');
-
-                return resetFormattingHtml;
+                // First split the text into lines
+                const lines = text.split('\n');
+                
+                return lines.map(line => {
+                    // Convert ANSI dark green text to HTML
+                    let processedLine = line.replace(/\u001b\[32m/g, '<span style="color:darkgreen;">');
+                    
+                    // Convert ANSI orange text to HTML
+                    processedLine = processedLine.replace(/\u001b\[33m/g, '<span style="color:orange;">');
+                    
+                    // Reset ANSI formatting to default
+                    processedLine = processedLine.replace(/\u001b\[0m/g, '</span>');
+                    
+                    // Wrap each line in a paragraph
+                    return `<p style="margin: 0.5em 0;">${processedLine}</p>`;
+                }).join('');
             }
 
             function parseAndDisplayCitation(citation, versions = ['kj']) {
