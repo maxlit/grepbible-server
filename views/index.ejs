@@ -21,6 +21,25 @@
             margin-bottom: 10px;*/
         }
         
+        .collapsed {
+            display: none;
+        }
+        .expand-button {
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 20px;
+            color: #0000EE;  /* Standard hyperlink blue color */
+            text-decoration: none;
+        }
+        .expand-button:hover {
+            text-decoration: underline;
+        }
+        .header-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            margin-left: 20px;
+        }
     </style>
     <title>grepbible WebUI</title>
     <!-- Attempt to load jQuery from a CDN -->
@@ -29,6 +48,17 @@
     <script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script>
 
     <script>
+        // UI Toggle functionality
+        $(document).ready(function() {
+            const toggleButton = $('#toggleUI');
+            const collapsibleContent = $('.collapsible-content');
+            
+            toggleButton.click(function() {
+                collapsibleContent.toggleClass('collapsed');
+                toggleButton.text(collapsibleContent.hasClass('collapsed') ? '+' : '−');
+            });
+        });
+
         var basePath = calculateBasePath();
         if (basePath.endsWith('/')) {
             basePath = basePath.slice(0, -1); // Remove trailing slash
@@ -379,13 +409,17 @@
     </script>
 </head>
 <body>
-    <h1>grepbible WebUI</h1>
+    <div>
+        <h1><span class="expand-button" id="toggleUI">−</span> grepbible WebUI</h1>
+    </div>
     <div style="margin-top: 20px;">
-        <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
-        <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
+        <div class="collapsible-content">
+            <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
+            <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
+        </div>
     </div>
     <hr>
-    <div id="searchForm">
+    <div id="searchForm" class="collapsible-content">
         <div>
             <label for="version">1st version:</label>
             <select name="version1" id="version">

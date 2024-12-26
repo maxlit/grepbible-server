@@ -50,15 +50,17 @@ function processGrepOutput(grepOutput, version, req) {
       const [, book, chapter, verse, text] = match;
       const protocol = req.protocol;
       let host = req.get('host');
-      //remove last character from if it is a slash
-      let url = '';
-      // Use X-Forwarded-Prefix header if available (set by nginx in PROD)
-      const prefix = req.get('X-Forwarded-Prefix') || '';
-      if (basePath === '') {
-        url = `${protocol}://${host}${prefix}/q/${version}/${book}/${chapter}/${verse || ''}`;
-      } else {
-        url = `${protocol}://${host}${prefix}/${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
-      }
+      
+      // Get base URL from request headers set by reverse proxy
+      const xForwardedPrefix = req.get('X-Forwarded-Prefix') || '';
+      const xOriginalUrl = req.get('X-Original-URL') || '';
+      const baseUrl = req.baseUrl || '';
+      
+      // Try different methods to detect the proxy path prefix
+      const prefix = xForwardedPrefix || xOriginalUrl || baseUrl || '';
+      
+      // Build URL with detected prefix
+      const url = `${protocol}://${host}${prefix}/q/${version}/${book}/${chapter}/${verse || ''}`;
       
       return `<b><a href="${url}">${book} ${chapter}:${verse}</a></b> ${text}`;
   });
