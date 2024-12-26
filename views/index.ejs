@@ -40,6 +40,43 @@
             justify-content: flex-start;
             margin-left: 20px;
         }
+        footer {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #666;
+            
+            /* Mobile-friendly additions */
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.9rem;  /* Slightly smaller text on mobile */
+            padding: 1rem 0.5rem;  /* Less horizontal padding on mobile */
+        }
+        
+        /* Media query for larger screens */
+        @media screen and (min-width: 768px) {
+            footer {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        footer p {
+            margin: 0.5rem 0;  /* Consistent spacing between paragraphs */
+            word-wrap: break-word;  /* Prevent text overflow on small screens */
+        }
+
+        footer a {
+            color: #0066cc;
+            text-decoration: none;
+            display: inline-block;  /* Better touch targets */
+            padding: 0.2rem 0;  /* Slightly larger touch area */
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
     </style>
     <title>grepbible WebUI</title>
     <!-- Attempt to load jQuery from a CDN -->
@@ -412,12 +449,6 @@
     <div>
         <h1><span class="expand-button" id="toggleUI">−</span> grepbible WebUI</h1>
     </div>
-    <div style="margin-top: 20px;">
-        <div class="collapsible-content">
-            <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
-            <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
-        </div>
-    </div>
     <hr>
     <div id="searchForm" class="collapsible-content">
         <div>
@@ -489,5 +520,10 @@
     </div>
     <hr>
     <div id="citation"></div>
+
+    <footer class="collapsible-content" style="text-align: left;">
+        <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
+        <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
+    </footer>
 </body>
 </html>
