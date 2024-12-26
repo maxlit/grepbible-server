@@ -52,10 +52,12 @@ function processGrepOutput(grepOutput, version, req) {
       let host = req.get('host');
       //remove last character from if it is a slash
       let url = '';
-      if (basePath == '') {
-        url = `${protocol}://${host}/q/${version}/${book}/${chapter}/${verse || ''}`;
+      // Use X-Forwarded-Prefix header if available (set by nginx in PROD)
+      const prefix = req.get('X-Forwarded-Prefix') || '';
+      if (basePath === '') {
+        url = `${protocol}://${host}${prefix}/q/${version}/${book}/${chapter}/${verse || ''}`;
       } else {
-        url = `${protocol}://${host}/${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
+        url = `${protocol}://${host}${prefix}/${basePath}/q/${version}/${book}/${chapter}/${verse || ''}`;
       }
       
       return `<b><a href="${url}">${book} ${chapter}:${verse}</a></b> ${text}`;
