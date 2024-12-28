@@ -444,6 +444,22 @@
                     $('#version3').val(versions[2]);  // Third version
                 }
             }
+
+            $('#parallelLines').change(function() {
+                const isParallel = $(this).is(':checked');
+                let newUrl = window.location.pathname;
+                
+                // Update the URL search parameters
+                const searchParams = new URLSearchParams(window.location.search);
+                if (isParallel) {
+                    searchParams.set('parallel', 'true');
+                } else {
+                    searchParams.delete('parallel');
+                }
+                
+                // Reload the page with new parameter
+                window.location.href = newUrl + (searchParams.toString() ? '?' + searchParams.toString() : '');
+            });
         });
     </script>
 </head>
