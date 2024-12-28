@@ -346,22 +346,24 @@
                 
                 // Collect input values
                 const postData = getVersions();
+                const parallelLines = $('#parallelLines').is(':checked');
 
-                $.post(originalBasePath + '/search', postData, function(data) {
+                $.post(originalBasePath + '/search', { ...postData, parallelLines }, function(data) {
                     if(data.redirectUrl) {
                         let redirectUrl = cleanRedirectUrl(data.redirectUrl);
                         console.log('ready::findQuoteBtn:: Redirecting to:', redirectUrl);
                         if (redirectUrl[0] !== '/') {
                             redirectUrl = '/' + redirectUrl;
                         }
+                        // Add parallel parameter to the URL if checked
+                        if (parallelLines) {
+                            redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + 'parallel=true';
+                        }
                         window.location.href = originalBasePath + redirectUrl;
                     }
                     if (data.error) {
                         console.error('Error fetching quote:', data.error);
                         $('#citation').text('Error fetching quote. Please try again.');
-                    } else {
-                        // Display the fetched quote
-                        $('#citation').html(ansiToHtml(data.quote));
                     }
                 }, 'json');
             }
@@ -496,7 +498,11 @@
             <span id="line"></span>
         </div>
         <div>
-            <button id = "findQuoteBtn">Search</button>
+            <input type="checkbox" id="parallelLines" name="parallelLines" <% if (locals.parallelLines) { %>checked<% } %>>
+            <label for="parallelLines">Parallel lines</label>
+        </div>
+        <div>
+            <button id="findQuoteBtn">Search</button>
         </div>
         <br>
         <div class="quarter-line">

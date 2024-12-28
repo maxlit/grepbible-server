@@ -77,15 +77,22 @@ function param2query(params) {
   return query;
 }
 
-function executeGbib(query, versions, callback) {
-  exec(`gbib -c '${query}' -v ${versions}`, (error, stdout, stderr) => {
-      if (error) {
-          console.error(`exec error: ${error}`);
-          callback({ error: "Error retrieving verse. Make sure your query is correct." });
-      } else {
-          callback({ quote: stdout.trim() });
-      }
-  });
+function executeGbib(query, versions, callback, options = {}) {
+    let command = `gbib -c '${query}' -v ${versions}`;
+    
+    // Add -i flag if parallelLines is true
+    if (options.parallelLines) {
+        command += ' -i';
+    }
+    
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+            callback({ error: "Error retrieving verse. Make sure your query is correct." });
+        } else {
+            callback({ quote: stdout.trim() });
+        }
+    });
 }
 
 // Fetch the available bibles list once at the start
@@ -144,27 +151,28 @@ app.post(`/search`,  async (req, res) => {
 
 // Existing GET endpoint for API calls
 app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
-  const { version, book, chapter, verses } = req.params;
-  let query = `${book} ${chapter}`;
-  if (verses) {
-      query += `:${verses}`;
-  }
-  const versions = version.split(',');//.join(',');
-  executeGbib(query, versions, (result) => res.json(result));
+    const { version, book, chapter, verses } = req.params;
+    const parallelLines = req.query.parallelLines === 'true';
+    
+    let query = `${book} ${chapter}`;
+    if (verses) {
+        query += `:${verses}`;
+    }
+    const versions = version.split(',');
+    executeGbib(query, versions, (result) => res.json(result), { parallelLines });
 });
 
 // New GET endpoint for search functionality
 app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
     const { version, book, chapter, verses } = req.params;
-    let query = `${book} ${chapter}`;
+    const parallelLines = req.query.parallel === 'true';
     
+    let query = `${book} ${chapter}`;
     if (verses) {
         query += `:${verses}`;
     }
 
     const versions = version.split(',');
-    console.log(`Versions: ${versions}`);
-
     executeGbib(query, versions, (result) => {
         let basePath = calculateServerBasePath(req);
         if (result.error) {
@@ -177,17 +185,17 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
                 BOOK2CHAPTERS
             });
         } else {
-            // Instead of rendering the full page, just send the quote
             res.render('index', { 
                 basePath, 
                 bibles, 
-                results: result.quote,  // This is the quote text
+                results: result.quote,
                 reference: query, 
                 versions: versions, 
-                BOOK2CHAPTERS
+                BOOK2CHAPTERS,
+                parallelLines  // Pass the parallel state to the template
             });
         }
-    });
+    }, { parallelLines });
 });
 
 app.get('/version/:version', (req, res) => {
