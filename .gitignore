@@ -14,4 +14,6 @@ npm-debug.log*
 # Optional eslint cache
 .eslintcache
 
+# Ignore specific scripts but not src/scripts
 scripts/
+!src/scripts/
