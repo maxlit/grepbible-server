@@ -339,33 +339,21 @@ app.get('/f/:version/:text', (req, res) => {
     });
 });
 
-// Handle /random with default version (KJV) by redirecting to /random/kj
+// Handle /random with default version (KJV)
 app.get('/random', (req, res) => {
-    const basePath = calculateServerBasePath(req);
-    const basePathSegment = basePath.split('/')[1];
-    let redirectUrl = cleanRedirectUrl('/random/kj', basePathSegment);
-    if (!redirectUrl.startsWith('/')) {
-        redirectUrl = '/' + redirectUrl;
-    }
-    res.redirect(basePath + redirectUrl);
+    res.json({ redirectUrl: '/random/kj' });
 });
 
 // Handle /random/:versions with specified versions
 app.get('/random/:versions', async (req, res) => {
     const versions = req.params.versions;
-    const basePath = calculateServerBasePath(req);
-    const basePathSegment = basePath.split('/')[1];
     
     try {
         const reference = await getRandomVerseReference();
         const { book, chapter, lines } = await parseCitationAsync(reference);
         
-        let redirectUrl = cleanRedirectUrl(`/q/${versions}/${book}/${chapter}/${lines}`, basePathSegment);
-        if (!redirectUrl.startsWith('/')) {
-            redirectUrl = '/' + redirectUrl;
-        }
-        
-        res.redirect(basePath + redirectUrl);
+        // Return relative path, let the browser handle base path
+        res.json({ redirectUrl: `/q/${versions}/${book}/${chapter}/${lines}` });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error retrieving random verse.");
