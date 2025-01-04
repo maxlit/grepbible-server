@@ -7,10 +7,12 @@ const path = require('path');
 const cors = require('cors');
 const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 require('dotenv').config();
+const { cleanRedirectUrl } = require('./src/scripts/utils');
 
 app.use(cors());
 app.use(express.json());
 app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
+app.use('/utils.js', express.static('src/scripts/utils.js'));
 
 const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
@@ -341,23 +343,30 @@ app.get('/f/:version/:text', (req, res) => {
 // Handle /random with default version (KJV) by redirecting to /random/kj
 app.get('/random', (req, res) => {
     const basePath = calculateServerBasePath(req);
-    res.redirect(basePath + '/random/kj');
+    const basePathSegment = basePath.split('/')[1];
+    let redirectUrl = cleanRedirectUrl('/random/kj', basePathSegment);
+    if (!redirectUrl.startsWith('/')) {
+        redirectUrl = '/' + redirectUrl;
+    }
+    res.redirect(basePath + redirectUrl);
 });
 
 // Handle /random/:versions with specified versions
 app.get('/random/:versions', async (req, res) => {
     const versions = req.params.versions;
     const basePath = calculateServerBasePath(req);
+    const basePathSegment = basePath.split('/')[1];
     
     try {
-        // Use the shared function to get random verse reference
         const reference = await getRandomVerseReference();
-
-        // Parse the reference
         const { book, chapter, lines } = await parseCitationAsync(reference);
         
-        // Redirect to the verse view with specified versions using the same approach as elsewhere
-        res.redirect(`${basePath}/q/${versions}/${book}/${chapter}/${lines}`);
+        let redirectUrl = cleanRedirectUrl(`/q/${versions}/${book}/${chapter}/${lines}`, basePathSegment);
+        if (!redirectUrl.startsWith('/')) {
+            redirectUrl = '/' + redirectUrl;
+        }
+        
+        res.redirect(basePath + redirectUrl);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error retrieving random verse.");
