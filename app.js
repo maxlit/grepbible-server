@@ -338,14 +338,16 @@ app.get('/f/:version/:text', (req, res) => {
     });
 });
 
-// Handle /random with default version (KJV)
+// Handle /random with default version (KJV) by redirecting to /random/kj
 app.get('/random', (req, res) => {
-    res.redirect('/random/kj');
+    const basePath = calculateServerBasePath(req);
+    res.redirect(basePath + '/random/kj');
 });
 
 // Handle /random/:versions with specified versions
 app.get('/random/:versions', async (req, res) => {
     const versions = req.params.versions;
+    const basePath = calculateServerBasePath(req);
     
     try {
         // Use the shared function to get random verse reference
@@ -354,8 +356,8 @@ app.get('/random/:versions', async (req, res) => {
         // Parse the reference
         const { book, chapter, lines } = await parseCitationAsync(reference);
         
-        // Redirect to the verse view with specified versions
-        res.redirect(`/q/${versions}/${book}/${chapter}/${lines}`);
+        // Redirect to the verse view with specified versions using the same approach as elsewhere
+        res.redirect(`${basePath}/q/${versions}/${book}/${chapter}/${lines}`);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error retrieving random verse.");
