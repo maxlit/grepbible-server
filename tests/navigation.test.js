@@ -73,4 +73,41 @@ describe('Navigation Tests', () => {
         // Verify there is some verse text content
         expect(finalResponse.text).toMatch(/<[^>]+>.+<\/[^>]+>/);
     });
+
+    test('Navigation to random verse with default version works', async () => {
+        // Test the redirect from /random to /random/kj
+        const randomResponse = await request(app)
+            .get('/random')
+            .expect(302); // Expect redirect status
+        
+        // Verify redirect URL contains /random/kj
+        expect(randomResponse.headers.location).toContain('/random/kj');
+        
+        // Follow the redirect
+        const finalResponse = await request(app)
+            .get(randomResponse.headers.location)
+            .expect(200);
+        
+        // Verify we landed on a verse page
+        expect(finalResponse.text).toContain('id="citationInput"');
+        // Verify there is some citation value in the input
+        expect(finalResponse.text).toMatch(/value="[^"]+"/);
+        // Verify there is some verse text content
+        expect(finalResponse.text).toMatch(/<[^>]+>.+<\/[^>]+>/);
+    });
+
+    test('Navigation to random verse with multiple versions works', async () => {
+        const response = await request(app)
+            .get('/random/kj,vg,de')
+            .expect(200);
+        
+        // Verify we landed on a verse page
+        expect(response.text).toContain('id="citationInput"');
+        
+        // Verify there is some citation value in the input
+        expect(response.text).toMatch(/value="[^"]+"/);
+        
+        // Verify there is verse text content
+        expect(response.text).toMatch(/<[^>]+>.+<\/[^>]+>/);
+    });
 }); 
