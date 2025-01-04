@@ -83,6 +83,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- Fallback to local jQuery if the CDN fails -->
     <script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script>
+    <!-- Add this after jQuery but before your main script -->
+    <script src="/utils.js"></script>
 
     <script>
         // UI Toggle functionality
@@ -159,20 +161,6 @@
                 // Simple replacement to wrap searchText in a span for highlighting
                 const highlighted = fullText.split(escapedSearchText).join(`<span class="highlight">${escapedSearchText}</span>`);
                 return highlighted;
-            }
-
-            function cleanRedirectUrl(redirectUrl) {
-                let splits = redirectUrl.split('/');
-
-                const basePathSegment = window.location.pathname.split('/')[1];
-
-                const pathSegments = redirectUrl.split('/');
-                if (pathSegments.length > 2) {
-                    if (splits[0] === splits[1] || (splits[0] === basePathSegment)) {
-                        return splits.slice(1).join('/');
-                    }
-                }
-                return redirectUrl;
             }
 
             function ansiToHtml(text) {
@@ -282,7 +270,7 @@
                     // Use the original base path for the search request
                     $.post(originalBasePath + '/search', postData, function(data) {
                         if(data.redirectUrl) {
-                            let redirectUrl = cleanRedirectUrl(data.redirectUrl);
+                            let redirectUrl = cleanRedirectUrl(data.redirectUrl, basePathSegment);
                             console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
                             console.log('redirect to:', originalBasePath + redirectUrl);
                             // prepend '/' to redirect if not the first symbol
@@ -350,7 +338,7 @@
 
                 $.post(originalBasePath + '/search', { ...postData, parallelLines }, function(data) {
                     if(data.redirectUrl) {
-                        let redirectUrl = cleanRedirectUrl(data.redirectUrl);
+                        let redirectUrl = cleanRedirectUrl(data.redirectUrl, basePathSegment);
                         console.log('ready::findQuoteBtn:: Redirecting to:', redirectUrl);
                         if (redirectUrl[0] !== '/') {
                             redirectUrl = '/' + redirectUrl;
