@@ -106,19 +106,31 @@ app.get('/', (req, res) => {
   res.render('index', { basePath, bibles, results: '', reference: '', versions: ['kj'], BOOK2CHAPTERS }); // Pass the bibles list to the view
 });
 
-app.get(`/random-verse-reference`, (req, res) => {
-    console.log('Random verse reference endpoint called');
-    console.log('Request path:', req.path);
-    exec('gbib -r', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            res.status(500).send("Error retrieving random verse reference.");
-        } else {
-            const reference = stdout.split('\n')[0].trim();
-            console.log(`Random verse reference generated: ${reference}`);
-            res.json({ reference });
-        }
+// Helper function to get a random verse reference
+async function getRandomVerseReference() {
+    return new Promise((resolve, reject) => {
+        exec('gbib -r', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`exec error: ${error}`);
+                reject("Error retrieving random verse reference.");
+            } else {
+                const reference = stdout.split('\n')[0].trim();
+                console.log(`Random verse reference generated: ${reference}`);
+                resolve(reference);
+            }
+        });
     });
+}
+
+// Random verse reference endpoint
+app.get(`/random-verse-reference`, async (req, res) => {
+    try {
+        const reference = await getRandomVerseReference();
+        res.json({ reference });
+    } catch (error) {
+        console.error(`Error in random-verse-reference:`, error);
+        res.status(500).send("Error retrieving random verse reference.");
+    }
 });
 
 app.post(`/search`,  async (req, res) => {
@@ -324,6 +336,30 @@ app.get('/f/:version/:text', (req, res) => {
             });
         }
     });
+});
+
+// Handle /random with default version (KJV)
+app.get('/random', (req, res) => {
+    res.redirect('/random/kj');
+});
+
+// Handle /random/:versions with specified versions
+app.get('/random/:versions', async (req, res) => {
+    const versions = req.params.versions;
+    
+    try {
+        // Use the shared function to get random verse reference
+        const reference = await getRandomVerseReference();
+
+        // Parse the reference
+        const { book, chapter, lines } = await parseCitationAsync(reference);
+        
+        // Redirect to the verse view with specified versions
+        res.redirect(`/q/${versions}/${book}/${chapter}/${lines}`);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send("Error retrieving random verse.");
+    }
 });
 
 module.exports = app; // Make sure this is at the end of app.js
