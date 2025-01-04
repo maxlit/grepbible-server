@@ -10,16 +10,16 @@ You are encouraged to use this project as a foundation or inspiration for crafti
 
 The endpoint is available at [langtools.io/gb](https://langtools.io/gb) to try.
 Here are some direct links on example endpoint (all of the could be navigated to also directly from the UI):
-- look up a Bible citation - "1 Thessalonians 5:21": [http://langtools.io/gb/q/kj/1%20Thessalonians/5/21](http://langtools.io/gb/q/kj/1%20Thessalonians/5/21)
-- ... in a few languages (English, German and Latin in the examples): [http://langtools.io/gb/q/kj,de,vg/1%20Thessalonians/5/21](http://langtools.io/gb/q/kj,de,vg/1%20Thessalonians/5/21)
-- look up a range of verses: [http://langtools.io/gb/q/kj/Genesis/41/29-30](http://langtools.io/gb/q/kj/Genesis/41/29-30)
-- ... in a few languages: [http://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30](http://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30)
-- ... ... in parallel lines: [http://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30?parallel=true](http://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30?parallel=true)
-- look up the whole chapter: [http://langtools.io/gb/q/kj/Psalms/117/](http://langtools.io/gb/q/kj/Psalms/117/)
-- ... in a few languages: [http://langtools.io/gb/q/kj,de,vg/Psalms/117/](http://langtools.io/gb/q/kj,de,vg/Psalms/117/)
-- random quote: [langtools.io/gb/random](https://langtools.io/gb/random)
-- ... in a few languages: [langtools.io/gb/random/kj,de,vg](https://langtools.io/gb/random/kj,de,vg)
-- look for a specific word ('molten' in KJV): [http://langtools.io/gb/f/kj/molten](http://langtools.io/gb/f/kj/molten)
+- look up a Bible citation - "1 Thessalonians 5:21": [/q/kj/1%20Thessalonians/5/21](https://langtools.io/gb/q/kj/1%20Thessalonians/5/21)
+  - ... in a few languages (English, German and Latin in the examples): [/q/kj,de,vg/1%20Thessalonians/5/21](https://langtools.io/gb/q/kj,de,vg/1%20Thessalonians/5/21)
+- look up a range of verses: [/q/kj/Genesis/41/29-30](https://langtools.io/gb/q/kj/Genesis/41/29-30)
+  - ... in a few languages: [/q/kj,de,vg/Genesis/41/29-30](https://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30)
+    - ... ... in parallel lines: [/q/kj,de,vg/Genesis/41/29-30?parallel=true](https://langtools.io/gb/q/kj,de,vg/Genesis/41/29-30?parallel=true)
+- look up the whole chapter: [/q/kj/Psalms/117/](https://langtools.io/gb/q/kj/Psalms/117/)
+  - ... in a few languages: [/q/kj,de,vg/Psalms/117/](https://langtools.io/gb/q/kj,de,vg/Psalms/117/)
+- random quote: [/random](https://langtools.io/gb/random)
+  - ... in a few languages: [/random/kj,de,vg](https://langtools.io/gb/random/kj,de,vg)
+- look for a specific word ('molten' in KJV): [/f/kj/molten](https://langtools.io/gb/f/kj/molten)
 
 ## Features
 
@@ -46,8 +46,8 @@ and run it
 
 To run `grepbible-server` locally without docker (covered in [Self-hosting](#self-hosting)), you need to:  
 1. install `grepbible` CLI tool first, `pip install grepbible` should do it, consult [this page](https://github.com/maxlit/grepbible?tab=readme-ov-file#installation)  for more details.  
-2a. install the nodeJS server app: `npm install grepbible-server`
-2b. (alternatively), you can clone this project with `git clone`, and run `npm start`.
+2. install the nodeJS server app: `npm install grepbible-server`
+3. (alternatively), you can clone this project with `git clone`, and run `npm start`.
 
 ## Contributing
 
@@ -55,7 +55,7 @@ Contributions to `grepbible-server` are welcome! Whether it's reporting issues, 
 
 ### Issues/bugs
 
-To raise an issue, go to 'Issues' tab, and click on 'New issue'.
+To raise an issue, go to ['Issues'](https://github.com/maxlit/grepbible-server/issues) tab, and click on ['New issue'](https://github.com/maxlit/grepbible-server/issues/new).
 
 ### Code
 
