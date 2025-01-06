@@ -341,19 +341,38 @@ app.get('/f/:version/:text', (req, res) => {
 
 // Handle /random with default version (KJV)
 app.get('/random', (req, res) => {
-    res.json({ redirectUrl: '/random/kj' });
+    let basePath = calculateServerBasePath(req);
+    res.redirect(`${basePath}/random/kj`);
 });
 
 // Handle /random/:versions with specified versions
 app.get('/random/:versions', async (req, res) => {
-    const versions = req.params.versions;
+    let versions = req.params.versions.split(',');
+    let basePath = calculateServerBasePath(req);
     
     try {
         const reference = await getRandomVerseReference();
-        const { book, chapter, lines } = await parseCitationAsync(reference);
-        
-        // Return relative path, let the browser handle base path
-        res.json({ redirectUrl: `/q/${versions}/${book}/${chapter}/${lines}` });
+        executeGbib(reference, versions, (result) => {
+            if (result.error) {
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: result.error, 
+                    reference: '', 
+                    versions: versions, 
+                    BOOK2CHAPTERS
+                });
+            } else {
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: result.quote,
+                    reference: reference, 
+                    versions: versions, 
+                    BOOK2CHAPTERS
+                });
+            }
+        });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send("Error retrieving random verse.");
