@@ -19,17 +19,7 @@ const basePath = process.env.BASE_PATH || ''; // Default to no base path if not 
 let bibles = []; // Initialize bibles list
 
 function calculateServerBasePath(req) {
-  console.log('calculateServerBasePath called with path:', req.path);
-  // Get the forwarded prefix from nginx
-  const forwardedPrefix = req.get('X-Forwarded-Prefix');
-  console.log('X-Forwarded-Prefix:', forwardedPrefix);
-  
-  // Use the forwarded prefix if available, otherwise fall back to BASE_PATH
-  const basePath = forwardedPrefix || process.env.BASE_PATH || '';
-  console.log('basePath value:', basePath);
-  
-  // Remove trailing slash if present
-  return basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+  return process.env.BASE_PATH || '';  // Default to empty if not defined
 }
 
 // Function to update the available Bibles list
