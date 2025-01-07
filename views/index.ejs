@@ -270,36 +270,17 @@
             }
             
             $('#randomVerseBtn').click(function() {
-                // Get the original base path without /f/... part
-                const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
+                // Use the basePath variable that's passed from the server
+                const basePath = '<%= basePath %>';
+                const postData = getVersions();
                 
-                $.get(originalBasePath + '/random-verse-reference', function(_data) {
-                    console.log('Random verse response received:', _data);
-                    const _reference = _data.reference;
-                    console.log('Random verse reference:', _reference);
-                    const postData = getVersions(_reference);
-                    
-                    // Use the original base path for the search request
-                    $.post(originalBasePath + '/search', postData, function(data) {
-                        if(data.redirectUrl) {
-                            let redirectUrl = cleanRedirectUrl(data.redirectUrl);
-                            console.log('ready::randomVerseBtn::Redirecting to:', redirectUrl);
-                            console.log('redirect to:', originalBasePath + redirectUrl);
-                            // prepend '/' to redirect if not the first symbol
-                            if (redirectUrl[0] !== '/') {
-                                redirectUrl = '/' + redirectUrl;
-                            }
-                            window.location.href = originalBasePath + redirectUrl;
-                        }
-                        if (data.error) {
-                            console.error('Error fetching quote:', data.error);
-                            $('#citation').text('Error fetching quote. Please try again.');
-                        }
-                    }, 'json');
-                }).fail(function(error) {
-                    console.error('Failed to fetch random verse:', error);
-                    $('#randomVerseOutput').text("Failed to fetch a random verse reference. Please try again.");
-                });
+                // Create versions string from selected versions
+                const versions = [postData.version, postData.version2, postData.version3]
+                    .filter(Boolean)  // Remove empty/null values
+                    .join(',');      // Join with commas
+                
+                // Redirect directly to the random endpoint with versions
+                window.location.href = basePath + '/random/' + versions;
             });
             
             function updateCitation() {
