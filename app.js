@@ -225,35 +225,48 @@ app.get('/version/:version', (req, res) => {
 });
 
 app.post(`/search-text`, (req, res) => {
-  const { query, version, caseInsensitive, wholeWords } = req.body;
+  const { query, version, caseInsensitive, wholeWords, flexible } = req.body;
   const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
   const versionDir = `${localBibleDir}/${version}`;
 
-  // Prepare grep options
-  let options = ['-nr']; // Default options
+  if (flexible) {
+    // Use gbib -s for flexible search
+    exec(`gbib -s "${query}" -v ${version}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        return res.json({ error: "Error performing search." });
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return res.json({ error: "Error performing search." });
+      }
+      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+    });
+  } else {
+    // Original grep-based search
+    let options = ['-nr']; // Default options
 
-  if (caseInsensitive === true || caseInsensitive === 'true') {
-    options.push('-i');
-  }
-  if (wholeWords === true || wholeWords === 'true') {
-    options.push('-w');
-  }
-
-  // Safely construct the grep command with sanitized inputs
-  const args = [...options, query, versionDir];
-
-  execFile('grep', args, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`exec error: ${error}`);
-      return res.json({ error: "Error performing search." });
+    if (caseInsensitive === true || caseInsensitive === 'true') {
+      options.push('-i');
     }
-    if (stderr) {
-      console.error(`stderr: ${stderr}`);
-      return res.json({ error: "Error performing search." });
+    if (wholeWords === true || wholeWords === 'true') {
+      options.push('-w');
     }
-    console.log(`stdout: ${stdout}`);
-    res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
-  });
+
+    const args = [...options, query, versionDir];
+
+    execFile('grep', args, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        return res.json({ error: "Error performing search." });
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return res.json({ error: "Error performing search." });
+      }
+      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+    });
+  }
 });
 
 function parseCitationAsync(citation) {

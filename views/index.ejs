@@ -77,6 +77,35 @@
         footer a:hover {
             text-decoration: underline;
         }
+
+        .tooltip-icon {
+            cursor: help;
+            margin-left: 5px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-icon::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 25px;
+            top: -5px;
+            min-width: 150px;
+            padding: 5px;
+            border-radius: 4px;
+            background: #333;
+            color: #fff;
+            font-size: 12px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1;
+        }
+
+        .tooltip-icon:hover::after {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
     <title>grepbible WebUI</title>
     <!-- Attempt to load jQuery from a CDN -->
@@ -375,6 +404,7 @@
                 const version = $('#version').val();
                 const caseInsensitive = $('#caseInsensitive').is(':checked');
                 const wholeWords = $('#wholeWords').is(':checked');
+                const flexible = $('#flexible').is(':checked');
                 
                 if (!findText.trim()) {
                     alert('Please enter text to find.');
@@ -393,7 +423,8 @@
                     query: findText,
                     version: version,
                     caseInsensitive: caseInsensitive,
-                    wholeWords: wholeWords
+                    wholeWords: wholeWords,
+                    flexible: flexible
                 }, function(data) {
                     $('#citation').html(highlightText(data.results, findText) || 'No results found.');
                 }).fail(function() {
@@ -440,6 +471,22 @@
                 
                 // Reload the page with new parameter
                 window.location.href = newUrl + (searchParams.toString() ? '?' + searchParams.toString() : '');
+            });
+
+            $('#flexible').change(function() {
+                const isFlexible = $(this).is(':checked');
+                if (isFlexible) {
+                    // Uncheck and disable other options when Flexible is checked
+                    $('#wholeWords, #caseInsensitive').prop('checked', false).prop('disabled', true);
+                } else {
+                    // Re-enable other options when Flexible is unchecked
+                    $('#wholeWords, #caseInsensitive').prop('disabled', false);
+                }
+            });
+
+            // Initialize tooltips
+            $('.tooltip-icon').each(function() {
+                $(this).tooltip();
             });
         });
     </script>
@@ -516,8 +563,15 @@
             <br>
             <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
             <label for="caseInsensitive">Case insensitive</label>
+            <span class="tooltip-icon" data-tooltip="Match text regardless of upper/lower case (e.g., 'house' matches 'House' and 'house')">?</span>
+            
             <input type="checkbox" id="wholeWords" name="wholeWords">
             <label for="wholeWords">Whole words</label>
+            <span class="tooltip-icon" data-tooltip="Match complete words only (e.g., 'hold' won't match 'behold')">?</span>
+            
+            <input type="checkbox" id="flexible" name="flexible">
+            <label for="flexible">Flexible</label>
+            <span class="tooltip-icon" data-tooltip="Use fuzzy matching to find similar words (handles typos and variations)">?</span>
         </div>
 
     </div>
