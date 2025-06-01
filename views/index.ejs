@@ -405,6 +405,7 @@
                 const caseInsensitive = $('#caseInsensitive').is(':checked');
                 const wholeWords = $('#wholeWords').is(':checked');
                 const flexible = $('#flexible').is(':checked');
+                const semantic = $('#semantic').is(':checked');
                 
                 if (!findText.trim()) {
                     alert('Please enter text to find.');
@@ -424,7 +425,8 @@
                     version: version,
                     caseInsensitive: caseInsensitive,
                     wholeWords: wholeWords,
-                    flexible: flexible
+                    flexible: flexible,
+                    semantic: semantic
                 }, function(data) {
                     $('#citation').html(highlightText(data.results, findText) || 'No results found.');
                 }).fail(function() {
@@ -572,6 +574,10 @@
             <input type="checkbox" id="flexible" name="flexible">
             <label for="flexible">Flexible</label>
             <span class="tooltip-icon" data-tooltip="Use fuzzy matching to find similar words (handles typos and variations)">?</span>
+
+            <input type="checkbox" id="semantic" name="semantic">
+            <label for="semantic">Semantic</label>
+            <span class="tooltip-icon" data-tooltip="Use AI to find semantically similar verses (may be slower)">?</span>
         </div>
 
     </div>

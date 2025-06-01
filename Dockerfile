@@ -18,7 +18,7 @@ COPY package*.json ./
 RUN npm install
 
 # Install the grepbible CLI tool
-RUN pip install grepbible
+RUN pip install grepbible[ml]
 
 # Create the directory for grepbible data
 RUN mkdir -p /root/grepbible_data
@@ -31,6 +31,10 @@ ENV PATH="${PATH}:/root/.local/bin"
 
 # Download a few Bibles
 RUN gbib -d kj,vg,de,po-BR,pl,ru,he
+
+# build RAG index
+RUN gbib --rag
+RUN gbib -v vg,de,po-BR,pl,ru,he
 
 # Copy the rest of the application
 COPY . .

@@ -225,13 +225,24 @@ app.get('/version/:version', (req, res) => {
 });
 
 app.post(`/search-text`, (req, res) => {
-  const { query, version, caseInsensitive, wholeWords, flexible } = req.body;
-  const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
-  const versionDir = `${localBibleDir}/${version}`;
+  const { query, version } = req.body;
+  const caseInsensitive = req.body.caseInsensitive === true || req.body.caseInsensitive === 'true';
+  const wholeWords = req.body.wholeWords === true || req.body.wholeWords === 'true';
+  const flexible = req.body.flexible === true || req.body.flexible === 'true';
+  const semantic = req.body.semantic === true || req.body.semantic === 'true';
 
-  if (flexible) {
-    // Use gbib -s for flexible search
-    exec(`gbib -s "${query}" -v ${version}`, (error, stdout, stderr) => {
+  if (semantic) {
+    // Use gbib with RAG for semantic search
+    exec(`gbib -s "${query}" -v ${version} --rag --grep`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        return res.json({ error: "Error performing semantic search." });
+      }
+      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+    });
+  } else if (flexible) {
+    // Existing flexible search code
+    exec(`gbib -s "${query}" -v ${version} --grep`, (error, stdout, stderr) => {
       if (error) {
         console.error(`exec error: ${error}`);
         return res.json({ error: "Error performing search." });
@@ -252,6 +263,9 @@ app.post(`/search-text`, (req, res) => {
     if (wholeWords === true || wholeWords === 'true') {
       options.push('-w');
     }
+
+    const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
+    const versionDir = `${localBibleDir}/${version}`;
 
     const args = [...options, query, versionDir];
 
