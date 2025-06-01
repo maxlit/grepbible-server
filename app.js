@@ -319,48 +319,148 @@ app.post(`/parse`, async (req, res) => {
 // Add new GET endpoint for text search
 app.get('/f/:version/:text', (req, res) => {
     const { version, text } = req.params;
+    
+    // Extract checkbox parameters from query string
+    const caseInsensitive = req.query.ci === '1';
+    const wholeWords = req.query.ww === '1';
+    const flexible = req.query.flex === '1';
+    const semantic = req.query.sem === '1';
+    
     const localBibleDir = process.env.LOCAL_BIBLE_DIR || `${process.env.HOME}/grepbible_data`;
     const versionDir = `${localBibleDir}/${version}`;
 
-    // Use the same grep options as in the POST endpoint
-    const args = ['-nr', text, versionDir];
+    if (semantic) {
+        // Use gbib with RAG for semantic search
+        exec(`gbib -s "${text}" -v ${version} --rag --grep`, (error, stdout, stderr) => {
+            let basePath = calculateServerBasePath(req);
+            if (error) {
+                console.error(`exec error: ${error}`);
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: "Error performing semantic search.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            } else {
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: processGrepOutput(stdout, version, req) || "No results found.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            }
+        });
+    } else if (flexible) {
+        // Use gbib flexible search
+        exec(`gbib -s "${text}" -v ${version} --grep`, (error, stdout, stderr) => {
+            let basePath = calculateServerBasePath(req);
+            if (error) {
+                console.error(`exec error: ${error}`);
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: "Error performing search.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            } else {
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: processGrepOutput(stdout, version, req) || "No results found.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            }
+        });
+    } else {
+        // Use grep with appropriate options
+        let options = ['-nr']; // Default options
 
-    execFile('grep', args, (error, stdout, stderr) => {
-        let basePath = calculateServerBasePath(req);
-        if (error && error.code !== 1) {  // grep returns 1 when no matches found
-            console.error(`exec error: ${error}`);
-            res.render('index', { 
-                basePath, 
-                bibles, 
-                results: "Error performing search.", 
-                reference: '', 
-                versions: [version], 
-                BOOK2CHAPTERS,
-                searchText: text  // Pass the search text to highlight it
-            });
-        } else if (stderr) {
-            console.error(`stderr: ${stderr}`);
-            res.render('index', { 
-                basePath, 
-                bibles, 
-                results: "Error performing search.", 
-                reference: '', 
-                versions: [version], 
-                BOOK2CHAPTERS,
-                searchText: text
-            });
-        } else {
-            res.render('index', { 
-                basePath, 
-                bibles, 
-                results: processGrepOutput(stdout, version, req) || "No results found.", 
-                reference: '', 
-                versions: [version], 
-                BOOK2CHAPTERS,
-                searchText: text
-            });
+        if (caseInsensitive) {
+            options.push('-i');
         }
-    });
+        if (wholeWords) {
+            options.push('-w');
+        }
+
+        const args = [...options, text, versionDir];
+
+        execFile('grep', args, (error, stdout, stderr) => {
+            let basePath = calculateServerBasePath(req);
+            if (error && error.code !== 1) {  // grep returns 1 when no matches found
+                console.error(`exec error: ${error}`);
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: "Error performing search.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            } else if (stderr) {
+                console.error(`stderr: ${stderr}`);
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: "Error performing search.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            } else {
+                res.render('index', { 
+                    basePath, 
+                    bibles, 
+                    results: processGrepOutput(stdout, version, req) || "No results found.", 
+                    reference: '', 
+                    versions: [version], 
+                    BOOK2CHAPTERS,
+                    searchText: text,
+                    caseInsensitive,
+                    wholeWords,
+                    flexible,
+                    semantic
+                });
+            }
+        });
+    }
 });
 
 // Handle /random with default version (KJV) by redirecting to /random/kj

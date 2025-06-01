@@ -415,8 +415,19 @@
                 // Store the original base path before modifying URL
                 const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
 
+                // Build URL with checkbox parameters
+                let newUrl = `${originalBasePath}/f/${version}/${encodeURIComponent(findText)}`;
+                const params = new URLSearchParams();
+                if (caseInsensitive) params.set('ci', '1');
+                if (wholeWords) params.set('ww', '1');
+                if (flexible) params.set('flex', '1');
+                if (semantic) params.set('sem', '1');
+                
+                if (params.toString()) {
+                    newUrl += '?' + params.toString();
+                }
+
                 // Update URL
-                const newUrl = `${originalBasePath}/f/${version}/${encodeURIComponent(findText)}`;
                 window.history.pushState({ type: 'textSearch' }, '', newUrl);
 
                 // Use the original base path for the AJAX request
@@ -443,6 +454,14 @@
                         const [, version, text] = match;
                         $('#version').val(version);
                         $('#findText').val(decodeURIComponent(text));
+                        
+                        // Set checkboxes based on URL parameters
+                        const urlParams = new URLSearchParams(window.location.search);
+                        $('#caseInsensitive').prop('checked', urlParams.has('ci'));
+                        $('#wholeWords').prop('checked', urlParams.has('ww'));
+                        $('#flexible').prop('checked', urlParams.has('flex'));
+                        $('#semantic').prop('checked', urlParams.has('sem'));
+                        
                         performTextSearch();
                     }
                 }
@@ -486,10 +505,23 @@
                 }
             });
 
-            // Initialize tooltips
-            $('.tooltip-icon').each(function() {
-                $(this).tooltip();
-            });
+            // Initialize checkboxes based on URL parameters on page load
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Only set checkboxes from URL params if they weren't already set by server-side rendering
+            // Check if any checkbox is already checked (indicating server-side rendering)
+            const hasServerRenderedCheckboxes = $('#caseInsensitive').is(':checked') || 
+                                               $('#wholeWords').is(':checked') || 
+                                               $('#flexible').is(':checked') || 
+                                               $('#semantic').is(':checked');
+            
+            if (!hasServerRenderedCheckboxes) {
+                // Only set from URL params if no checkboxes are already checked
+                $('#caseInsensitive').prop('checked', urlParams.has('ci'));
+                $('#wholeWords').prop('checked', urlParams.has('ww'));
+                $('#flexible').prop('checked', urlParams.has('flex'));
+                $('#semantic').prop('checked', urlParams.has('sem'));
+            }
         });
     </script>
 </head>
@@ -585,7 +617,7 @@
     <div id="citation"></div>
 
     <footer class="collapsible-content" style="text-align: left;">
-        <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a> CLI tool.</p>
+        <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a><% if (process.env.PKG_VERSION) { %> v<%= process.env.PKG_VERSION %><% } %> CLI tool.</p>
         <p><small>repo: <a href="https://github.com/maxlit/grepbible-server" target="_blank">grepbible-server</a></small></p>
     </footer>
 </body>

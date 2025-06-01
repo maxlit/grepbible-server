@@ -30,17 +30,20 @@ ENV LOCAL_BIBLE_DIR=/root/grepbible_data
 ENV PATH="${PATH}:/root/.local/bin"
 
 # Download a few Bibles
-RUN gbib -d kj,vg,de,po-BR,pl,ru,he
+RUN gbib -d kj,vg,de,pl,ru,he
 
 # build RAG index
 RUN gbib --rag
-RUN gbib -v vg,de,po-BR,pl,ru,he
+RUN gbib -v vg,de,pl,ru,he
 
 # Copy the rest of the application
 COPY . .
 
 # Set GIT_VERSION environment variable during build
 RUN echo "GIT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo 'dev') from $(date +%d.%m.%Y)" > /usr/src/app/.env
+
+# Set PKG_VERSION environment variable during build
+RUN echo "PKG_VERSION=$(pip show grepbible 2>/dev/null | grep '^Version:' | cut -d' ' -f2 || echo 'unknown')" >> /usr/src/app/.env
 
 # Expose port (adjust if different)
 EXPOSE 4628
