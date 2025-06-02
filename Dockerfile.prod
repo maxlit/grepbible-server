@@ -1,5 +1,6 @@
 # Dockerfile.prod
-FROM axlit/grepbible-server:latest
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
 
 # Install PM2 globally for production process management
 RUN npm install -g pm2
