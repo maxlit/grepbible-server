@@ -106,6 +106,35 @@
             visibility: visible;
             opacity: 1;
         }
+
+        .loading {
+            padding: 20px;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #findButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
     <title>grepbible WebUI</title>
     <!-- Attempt to load jQuery from a CDN -->
@@ -412,6 +441,22 @@
                     return;
                 }
 
+                // Show loading indicator and disable button
+                $('#findButton').prop('disabled', true).text('Searching...');
+                
+                if (semantic) {
+                    $('#citation').html('<div class="loading">🤖 Performing semantic search...<br><small>This might take up to a minute. Please be patient.</small></div>');
+                    
+                    // Show timeout warning after 30 seconds
+                    const timeoutWarning = setTimeout(() => {
+                        if ($('#citation .loading').length > 0) {
+                            $('#citation').html('<div class="loading">🤖 Still processing semantic search...<br><small>Large searches can take up to 2 minutes. Please wait.</small></div>');
+                        }
+                    }, 30000);
+                } else {
+                    $('#citation').html('<div class="loading">Searching...</div>');
+                }
+
                 // Store the original base path before modifying URL
                 const originalBasePath = calculateBasePath().replace(/\/f\/.*$/, '');
 
@@ -440,8 +485,20 @@
                     semantic: semantic
                 }, function(data) {
                     $('#citation').html(highlightText(data.results, findText) || 'No results found.');
-                }).fail(function() {
-                    $('#citation').text('Error performing search. Please try again.');
+                }).fail(function(jqXHR) {
+                    if (jqXHR.status === 429 || jqXHR.status === 503) {
+                        $('#citation').html('<div style="color: red;">Too many semantic searches. Please wait for 15 minutes and try again.</div>');
+                    } else if (jqXHR.status === 504) {
+                        $('#citation').html('<div style="color: red;">Semantic search timed out. Please try with a different search term.</div>');
+                    } else {
+                        $('#citation').text('Error performing search. Please try again.');
+                    }
+                }).always(function() {
+                    // Re-enable button and clear any timeouts
+                    $('#findButton').prop('disabled', false).text('Find');
+                    if (semantic) {
+                        clearTimeout(timeoutWarning);
+                    }
                 });
             }
 

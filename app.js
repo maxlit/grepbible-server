@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 
 const bodyParser = require('body-parser');
 const { exec, execFile } = require('child_process');
@@ -15,6 +16,8 @@ app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')))
 const basePath = process.env.BASE_PATH || ''; // Default to no base path if not defined
 
 let bibles = []; // Initialize bibles list
+let activeSemanticSearchCount = 0;
+const MAX_SEMANTIC_SEARCHES = 3;
 
 function calculateServerBasePath(req) {
   return process.env.BASE_PATH || '';  // Default to empty if not defined
@@ -224,7 +227,24 @@ app.get('/version/:version', (req, res) => {
     });
 });
 
-app.post(`/search-text`, (req, res) => {
+// Create a more restrictive rate limiter for semantic search
+const semanticSearchLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // limit each IP to 5 semantic searches per windowMs
+    message: 'Too many semantic search requests, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Apply to semantic search routes
+app.post('/search-text', (req, res, next) => {
+    if (req.body.semantic === true || req.body.semantic === 'true') {
+        return semanticSearchLimiter(req, res, next);
+    }
+    next();
+});
+
+app.post('/search-text', (req, res) => {
   const { query, version } = req.body;
   const caseInsensitive = req.body.caseInsensitive === true || req.body.caseInsensitive === 'true';
   const wholeWords = req.body.wholeWords === true || req.body.wholeWords === 'true';
@@ -232,13 +252,34 @@ app.post(`/search-text`, (req, res) => {
   const semantic = req.body.semantic === true || req.body.semantic === 'true';
 
   if (semantic) {
+    if (activeSemanticSearchCount >= MAX_SEMANTIC_SEARCHES) {
+        return res.status(503).json({ 
+            error: 'Semantic search is temporarily overloaded. Please try again in a few minutes.' 
+        });
+    }
+    activeSemanticSearchCount++;
+    
+    // Set a timeout to prevent stuck searches
+    const searchTimeout = setTimeout(() => {
+        activeSemanticSearchCount--;
+        if (!res.headersSent) {
+            res.status(504).json({ error: "Semantic search timed out. Please try again." });
+        }
+    }, 120000); // 2 minute timeout
+    
     // Use gbib with RAG for semantic search
     exec(`gbib -s "${query}" -v ${version} --rag --grep`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return res.json({ error: "Error performing semantic search." });
+      try {
+        clearTimeout(searchTimeout); // Clear timeout if search completes normally
+        if (error) {
+          console.error(`exec error: ${error}`);
+          return res.status(500).json({ error: "Error performing semantic search." });
+        }
+        res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+      } finally {
+        // Always decrease the counter, even if there was an error
+        activeSemanticSearchCount--;
       }
-      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
     });
   } else if (flexible) {
     // Existing flexible search code
