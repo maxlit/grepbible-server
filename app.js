@@ -311,7 +311,7 @@ app.post('/search-text', (req, res) => {
     const args = [...options, query, versionDir];
 
     execFile('grep', args, (error, stdout, stderr) => {
-      if (error) {
+      if (error && error.code !== 1) {  // Ignore grep's exit code 1 (no matches)
         console.error(`exec error: ${error}`);
         return res.json({ error: "Error performing search." });
       }
@@ -455,7 +455,7 @@ app.get('/f/:version/:text', (req, res) => {
 
         execFile('grep', args, (error, stdout, stderr) => {
             let basePath = calculateServerBasePath(req);
-            if (error && error.code !== 1) {  // grep returns 1 when no matches found
+            if (error && error.code !== 1) {  // Ignore grep's exit code 1 (no matches)
                 console.error(`exec error: ${error}`);
                 res.render('index', { 
                     basePath, 
