@@ -92,8 +92,13 @@ release-docker:
   script:
     - echo "Docker Hub Username ${DOCKER_HUB_USERNAME}"
     - docker info
-    - docker build -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest .
+    # Build slim version first
+    - docker build -f Dockerfile -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}-slim -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:slim .
+    # Build ML version
+    - docker build -f Dockerfile.ml -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest .
     - echo $DOCKER_HUB_ACCESS_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+    - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}-slim
+    - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:slim
     - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}
     - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest
   when: manual
@@ -111,18 +116,21 @@ release-docker-prod:
     DOCKER_IMAGE_NAME: "grepbible-server"
     PROD_DOCKERFILE: "Dockerfile.prod"
   before_script:
-    # Install build dependencies
-    - apk add --no-cache python3 py3-pip gcc g++ musl-dev python3-dev
     # Install python and pip to get grepbible version
-    - pip install grepbible[ml]
+    - apk add --no-cache python3 py3-pip
+    - pip install grepbible
     # Get grepbible version
     - export GREPBIBLE_VERSION=$(pip show grepbible | grep '^Version:' | cut -d' ' -f2)
     # Combine versions into tag
     - export FULL_TAG="${CI_COMMIT_TAG}_${GREPBIBLE_VERSION}"
   script:
     - echo "Building Production Docker Image..."
+    - echo "Docker Hub Username: ${DOCKER_HUB_USERNAME}"
+    - echo "Docker Image Name: ${DOCKER_IMAGE_NAME}"
+    - echo "CI Commit Tag: ${CI_COMMIT_TAG}"
+    - echo "Full tag: ${FULL_TAG}"
+    - echo "Base Image: ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG}"
     - docker info
-    - echo "docker build -f ${PROD_DOCKERFILE} --build-arg BASE_IMAGE=${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-${FULL_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-latest ."
     - docker build -f ${PROD_DOCKERFILE} --build-arg BASE_IMAGE=${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-${FULL_TAG} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-latest .
     - echo $DOCKER_HUB_ACCESS_TOKEN | docker login -u $DOCKER_HUB_USERNAME --password-stdin
     - docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:prod-${FULL_TAG}
