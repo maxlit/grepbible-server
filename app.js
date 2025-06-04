@@ -273,6 +273,10 @@ app.post('/search-text', (req, res) => {
         clearTimeout(searchTimeout); // Clear timeout if search completes normally
         if (error) {
           console.error(`exec error: ${error}`);
+          // Check if the error message contains FileNotFoundError for RAG index
+          if (stderr && stderr.includes('FileNotFoundError: No RAG index found')) {
+            return res.status(400).json({ error: `Semantic search is not available for the '${version}' version. Please try with a different version or use regular search.` });
+          }
           return res.status(500).json({ error: "Error performing semantic search." });
         }
         res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });

@@ -490,6 +490,8 @@
                         $('#citation').html('<div style="color: red;">Too many semantic searches. Please wait for 15 minutes and try again.</div>');
                     } else if (jqXHR.status === 504) {
                         $('#citation').html('<div style="color: red;">Semantic search timed out. Please try with a different search term.</div>');
+                    } else if (jqXHR.status === 400 && jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                        $('#citation').html(`<div style="color: red;">${jqXHR.responseJSON.error}</div>`);
                     } else {
                         $('#citation').text('Error performing search. Please try again.');
                     }

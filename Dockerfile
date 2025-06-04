@@ -34,7 +34,7 @@ ENV PATH="${PATH}:/root/.local/bin"
 # Download Bibles and build RAG index in one layer
 RUN gbib -d kj,vg,de,pl,ru,he && \
     gbib --rag && \
-    gbib -v vg,de,pl,ru,he
+    gbib --rag -v vg,de,pl,ru,he
 
 # Copy the rest of the application
 COPY . .
