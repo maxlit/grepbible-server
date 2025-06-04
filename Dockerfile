@@ -33,8 +33,10 @@ ENV PATH="${PATH}:/root/.local/bin"
 
 # Download Bibles and build RAG index in one layer
 RUN gbib -d kj,vg,de,pl,ru,he && \
-    gbib --rag && \
-    gbib --rag -v vg,de,pl,ru,he
+    gbib --rag
+
+# skipping the indexing of additional language versions since it leads to a timeout on gitlab CI/CD pipeline - to be done manually inside the docker container
+#RUN gbib --rag -v vg,de,pl,ru,he
 
 # Copy the rest of the application
 COPY . .
