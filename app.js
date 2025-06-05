@@ -7,6 +7,7 @@ const app = express();
 const path = require('path');
 const cors = require('cors');
 const BOOK2CHAPTERS = require('./src/scripts/constants.js');
+const logger = require('./src/utils/logger');
 require('dotenv').config();
 
 app.use(cors());
@@ -27,7 +28,7 @@ function calculateServerBasePath(req) {
 function updateAvailableBibles() {
   exec('gbib -l', (error, stdout, stderr) => {
     if (error) {
-        console.error(`exec error: ${error}`);
+        logger.error(`exec error: ${error}`);
         bibles = []; // Keep bibles as an empty array on error
     } else {
         bibles = stdout.split('\n').filter(line => line).map(line => {
@@ -44,7 +45,7 @@ function processGrepOutput(grepOutput, version, req) {
   const htmlLines = lines.map(line => {
       const match = line.match(/.*\/([^\/]+)\/(\d+)\.txt:(\d+):(.*)/);
       if (!match) {
-          console.error('Error parsing line:', line);
+          logger.error('Error parsing line:', line);
           return 'Error parsing line.';
       }
 
@@ -136,7 +137,7 @@ app.get(`/random-verse-reference`, async (req, res) => {
 
 app.post(`/search`,  async (req, res) => {
   const { query } = req.body;
-  console.log(`Search query: ${query}`);
+  logger.info(`Search query: ${query}`);
 
     const versionsArray = [
         req.body.version,
@@ -146,18 +147,18 @@ app.post(`/search`,  async (req, res) => {
 
   // Join the versions array into a comma-separated string
   const versions = versionsArray.join(',');
-  console.log(`Versions: ${versions}`);
+  logger.info(`Versions: ${versions}`);
   try {
       const { book, chapter, lines } = await parseCitationAsync(query);
-      console.log(`Parsed citation: ${book} ${chapter}:${lines}`);
+      logger.info(`Parsed citation: ${book} ${chapter}:${lines}`);
       let basePath = calculateServerBasePath(req);
-      console.log(`Base path: ${basePath}`);
+      logger.info(`Base path: ${basePath}`);
       const getUrl = basePath + `/q/${versions}/${book}/${chapter}/${lines || ''}`;
       res.status(200).json({ redirectUrl: getUrl });
 
     } catch (error) {
-      console.error("Error occurred in /search:", error.message);
-      console.error("Stack trace:", error.stack);
+      logger.error("Error occurred in /search:", error.message);
+      logger.error("Stack trace:", error.stack);
       res.status(500).json({ error: "error.message", details: error.message });
   }
 });
@@ -214,8 +215,8 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
 app.get('/version/:version', (req, res) => {
     const versions = req.params.version.split(',').filter(v => v); // Split by comma and remove empty strings
     const basePath = calculateServerBasePath(req);
-    console.log('Calculated basePath:', basePath);
-    console.log('Versions:', versions);
+    logger.info('Calculated basePath:', basePath);
+    logger.info('Versions:', versions);
     
     res.render('index', {
         BOOK2CHAPTERS,
@@ -272,7 +273,7 @@ app.post('/search-text', (req, res) => {
       try {
         clearTimeout(searchTimeout); // Clear timeout if search completes normally
         if (error) {
-          console.error(`exec error: ${error}`);
+          logger.error(`exec error: ${error}`);
           // Check if the error message contains FileNotFoundError for RAG index
           if (stderr && stderr.includes('FileNotFoundError: No RAG index found')) {
             return res.status(400).json({ error: `Semantic search is not available for the '${version}' version. Please try with a different version or use regular search.` });
@@ -289,11 +290,11 @@ app.post('/search-text', (req, res) => {
     // Existing flexible search code
     exec(`gbib -s "${query}" -v ${version} --grep`, (error, stdout, stderr) => {
       if (error) {
-        console.error(`exec error: ${error}`);
+        logger.error(`exec error: ${error}`);
         return res.json({ error: "Error performing search." });
       }
       if (stderr) {
-        console.error(`stderr: ${stderr}`);
+        logger.error(`stderr: ${stderr}`);
         return res.json({ error: "Error performing search." });
       }
       res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
@@ -316,11 +317,11 @@ app.post('/search-text', (req, res) => {
 
     execFile('grep', args, (error, stdout, stderr) => {
       if (error && error.code !== 1) {  // Ignore grep's exit code 1 (no matches)
-        console.error(`exec error: ${error}`);
+        logger.error(`exec error: ${error}`);
         return res.json({ error: "Error performing search." });
       }
       if (stderr) {
-        console.error(`stderr: ${stderr}`);
+        logger.error(`stderr: ${stderr}`);
         return res.json({ error: "Error performing search." });
       }
       res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
@@ -332,14 +333,14 @@ function parseCitationAsync(citation) {
   return new Promise((resolve, reject) => {
     exec(`gbib -c "${citation}" --parse`, (error, stdout, stderr) => {
       if (error) {
-        console.error(`exec error: ${error}`);
+        logger.error(`exec error: ${error}`);
         reject("Error retrieving citation details.");
       } else {
         try {
           const [book, chapter, lines] = JSON.parse(stdout);
           resolve({ book, chapter, lines });
         } catch (err) {
-          console.error(`Error parsing JSON: ${err}`);
+          logger.error(`Error parsing JSON: ${err}`);
           reject("Error parsing citation details.");
         }
       }
@@ -356,7 +357,7 @@ app.post(`/parse`, async (req, res) => {
     res.json(parsedResult); // Send the parsed result back
   } catch (error) {
     // Handle any errors that might occur during parsing
-    console.error(`Error while parsing citation: ${error}`);
+    logger.error(`Error while parsing citation: ${error}`);
     res.json({ error: "Error parsing citation details." });
   }
 });
@@ -379,7 +380,7 @@ app.get('/f/:version/:text', (req, res) => {
         exec(`gbib -s "${text}" -v ${version} --rag --grep`, (error, stdout, stderr) => {
             let basePath = calculateServerBasePath(req);
             if (error) {
-                console.error(`exec error: ${error}`);
+                logger.error(`exec error: ${error}`);
                 res.render('index', { 
                     basePath, 
                     bibles, 
@@ -414,7 +415,7 @@ app.get('/f/:version/:text', (req, res) => {
         exec(`gbib -s "${text}" -v ${version} --grep`, (error, stdout, stderr) => {
             let basePath = calculateServerBasePath(req);
             if (error) {
-                console.error(`exec error: ${error}`);
+                logger.error(`exec error: ${error}`);
                 res.render('index', { 
                     basePath, 
                     bibles, 
@@ -460,7 +461,7 @@ app.get('/f/:version/:text', (req, res) => {
         execFile('grep', args, (error, stdout, stderr) => {
             let basePath = calculateServerBasePath(req);
             if (error && error.code !== 1) {  // Ignore grep's exit code 1 (no matches)
-                console.error(`exec error: ${error}`);
+                logger.error(`exec error: ${error}`);
                 res.render('index', { 
                     basePath, 
                     bibles, 
@@ -475,7 +476,7 @@ app.get('/f/:version/:text', (req, res) => {
                     semantic
                 });
             } else if (stderr) {
-                console.error(`stderr: ${stderr}`);
+                logger.error(`stderr: ${stderr}`);
                 res.render('index', { 
                     basePath, 
                     bibles, 
@@ -529,7 +530,7 @@ app.get('/random/:versions', async (req, res) => {
         // Redirect to the verse view with specified versions using the same approach as elsewhere
         res.redirect(`${basePath}/q/${versions}/${book}/${chapter}/${lines}`);
     } catch (error) {
-        console.error('Error:', error);
+        logger.error('Error:', error);
         res.status(500).send("Error retrieving random verse.");
     }
 });
