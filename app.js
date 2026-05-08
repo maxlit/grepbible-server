@@ -180,36 +180,70 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
 app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
     const { version, book, chapter, verses } = req.params;
     const parallelLines = req.query.parallel === 'true';
-    
+    const sideBySide = req.query.sidebyside === 'true';
+
     let query = `${book} ${chapter}`;
     if (verses) {
         query += `:${verses}`;
     }
 
     const versions = version.split(',');
-    executeGbib(query, versions, (result) => {
-        let basePath = calculateServerBasePath(req);
-        if (result.error) {
-            res.render('index', { 
-                basePath, 
-                bibles, 
-                results: result.error, 
-                reference: '', 
-                versions: versions, 
-                BOOK2CHAPTERS
+
+    if (sideBySide && versions.length > 1) {
+        // Fetch each version separately for side-by-side display
+        let completed = 0;
+        const sideBySideResults = new Array(versions.length);
+        let hasError = false;
+
+        versions.forEach((v, i) => {
+            executeGbib(query, [v], (result) => {
+                if (result.error) {
+                    sideBySideResults[i] = { version: v, text: result.error };
+                } else {
+                    sideBySideResults[i] = { version: v, text: result.quote };
+                }
+                completed++;
+                if (completed === versions.length) {
+                    let basePath = calculateServerBasePath(req);
+                    res.render('index', {
+                        basePath,
+                        bibles,
+                        results: '',
+                        reference: query,
+                        versions: versions,
+                        BOOK2CHAPTERS,
+                        parallelLines,
+                        sideBySide,
+                        sideBySideResults
+                    });
+                }
             });
-        } else {
-            res.render('index', { 
-                basePath, 
-                bibles, 
-                results: result.quote,
-                reference: query, 
-                versions: versions, 
-                BOOK2CHAPTERS,
-                parallelLines  // Pass the parallel state to the template
-            });
-        }
-    }, { parallelLines });
+        });
+    } else {
+        executeGbib(query, versions, (result) => {
+            let basePath = calculateServerBasePath(req);
+            if (result.error) {
+                res.render('index', {
+                    basePath,
+                    bibles,
+                    results: result.error,
+                    reference: '',
+                    versions: versions,
+                    BOOK2CHAPTERS
+                });
+            } else {
+                res.render('index', {
+                    basePath,
+                    bibles,
+                    results: result.quote,
+                    reference: query,
+                    versions: versions,
+                    BOOK2CHAPTERS,
+                    parallelLines  // Pass the parallel state to the template
+                });
+            }
+        }, { parallelLines });
+    }
 });
 
 app.get('/version/:version', (req, res) => {

@@ -80,9 +80,20 @@
 
         .tooltip-icon {
             cursor: help;
-            margin-left: 5px;
+            margin-left: 3px;
             position: relative;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #888;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            line-height: 1;
+            vertical-align: middle;
         }
 
         .tooltip-icon::after {
@@ -96,6 +107,7 @@
             background: #333;
             color: #fff;
             font-size: 12px;
+            font-weight: normal;
             visibility: hidden;
             opacity: 0;
             transition: opacity 0.3s;
@@ -105,6 +117,59 @@
         .tooltip-icon:hover::after {
             visibility: visible;
             opacity: 1;
+        }
+
+        .form-groups {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .form-group-box {
+            border: 1px dashed #999;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .form-group-box > div {
+            margin-bottom: 6px;
+        }
+
+        .form-group-box > div:last-child {
+            margin-bottom: 0;
+        }
+
+        .version-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        @media screen and (max-width: 767px) {
+            .form-groups {
+                flex-direction: column;
+            }
+
+            .version-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .version-row label {
+            white-space: nowrap;
+        }
+
+        .search-flags label {
+            white-space: nowrap;
+        }
+
+        .search-flags > div {
+            margin-bottom: 4px;
         }
 
         .loading {
@@ -382,10 +447,11 @@
             function search() {
                 // Get the original base path without /f/... part
                 const originalBasePath = '<%= basePath %>';
-                
+
                 // Collect input values
                 const postData = getVersions();
                 const parallelLines = $('#parallelLines').is(':checked');
+                const sideBySide = $('#sideBySide').is(':checked');
 
                 $.post(originalBasePath + '/search', { ...postData, parallelLines }, function(data) {
                     if(data.redirectUrl) {
@@ -394,9 +460,12 @@
                         if (redirectUrl[0] !== '/') {
                             redirectUrl = '/' + redirectUrl;
                         }
-                        // Add parallel parameter to the URL if checked
-                        if (parallelLines) {
-                            redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + 'parallel=true';
+                        // Add display mode parameters to the URL
+                        const params = [];
+                        if (parallelLines) params.push('parallel=true');
+                        if (sideBySide) params.push('sidebyside=true');
+                        if (params.length) {
+                            redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + params.join('&');
                         }
                         window.location.href = redirectUrl;
                     }
@@ -537,21 +606,26 @@
                 }
             }
 
-            $('#parallelLines').change(function() {
-                const isParallel = $(this).is(':checked');
+            function reloadWithDisplayParams() {
                 let newUrl = window.location.pathname;
-                
-                // Update the URL search parameters
                 const searchParams = new URLSearchParams(window.location.search);
-                if (isParallel) {
+
+                if ($('#parallelLines').is(':checked')) {
                     searchParams.set('parallel', 'true');
                 } else {
                     searchParams.delete('parallel');
                 }
-                
-                // Reload the page with new parameter
+                if ($('#sideBySide').is(':checked')) {
+                    searchParams.set('sidebyside', 'true');
+                } else {
+                    searchParams.delete('sidebyside');
+                }
+
                 window.location.href = newUrl + (searchParams.toString() ? '?' + searchParams.toString() : '');
-            });
+            }
+
+            $('#parallelLines').change(reloadWithDisplayParams);
+            $('#sideBySide').change(reloadWithDisplayParams);
 
             $('#flexible').change(function() {
                 const isFlexible = $(this).is(':checked');
@@ -590,90 +664,97 @@
     </div>
     <hr>
     <div id="searchForm" class="collapsible-content">
-        <div>
-            <label for="version">1st version:</label>
-            <select name="version1" id="version">
-                <% bibles.forEach(function(bible) { %>
-                    <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
-                <% }); %>
-            </select>
-        </div>
-        
-        <div>
-            <label for="version2">2nd version:</label>
-            <select name="version2" id="version2">
-                <option value="" selected disabled>Select a version</option>
-                <% bibles.forEach(function(bible) { %>
-                    <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
-                <% }); %>
-            </select>
-        </div>
-        
-        <div>
-            <label for="version3">3rd version:</label>
-            <select name="version3" id="version3">
-                <option value="" selected disabled>Select a version</option>
-                <% bibles.forEach(function(bible) { %>
-                    <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
-                <% }); %>
-            </select>
-        </div>
-        
-        <div>
-            <input type="text" id="citationInput" name="query" placeholder="quote e.g. Genesis 1:1"/>
-        </div>
-        <div>
-            <label for="book">Book:</label>
-            <select id="book"></select>
-        </div>
-        <div>
-            <label for="chapter">Chapter:</label>
-            <select id="chapter"></select>
-        </div>
-        <div>
-            <label for="line">Line(s):</label>
-            <span id="line"></span>
-        </div>
-        <div>
-            <input type="checkbox" id="parallelLines" name="parallelLines" <% if (locals.parallelLines) { %>checked<% } %>>
-            <label for="parallelLines">Parallel lines</label>
-        </div>
-        <div>
-            <button id="findQuoteBtn">Search</button>
-        </div>
-        <br>
-        <div class="quarter-line">
-            
-            <button id="randomVerseBtn">Random Verse</button>
-            <br>
-        </div>
-        <br>
-        <div>
-            <br>
-            <label for="findText">Find text:</label>
-            <input type="text" id="findText" placeholder="Enter text to find" value="<%= locals.searchText || '' %>"/>
-            <button id="findButton">Find</button>
-            <br>
-            <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
-            <label for="caseInsensitive">Case insensitive</label>
-            <span class="tooltip-icon" data-tooltip="Match text regardless of upper/lower case (e.g., 'house' matches 'House' and 'house')">?</span>
-            
-            <input type="checkbox" id="wholeWords" name="wholeWords">
-            <label for="wholeWords">Whole words</label>
-            <span class="tooltip-icon" data-tooltip="Match complete words only (e.g., 'hold' won't match 'behold')">?</span>
-            
-            <input type="checkbox" id="flexible" name="flexible">
-            <label for="flexible">Flexible</label>
-            <span class="tooltip-icon" data-tooltip="Use fuzzy matching to find similar words (handles typos and variations)">?</span>
+        <div class="form-groups">
+            <div class="form-group-box">
+                <div>
+                    <input type="text" id="citationInput" name="query" placeholder="quote e.g. Genesis 1:1"/>
+                </div>
+                <div>
+                    <label for="book">Book:</label>
+                    <select id="book"></select>
+                </div>
+                <div>
+                    <label for="chapter">Chapter:</label>
+                    <select id="chapter"></select>
+                </div>
+                <div>
+                    <label for="line">Line(s):</label>
+                    <span id="line"></span>
+                </div>
+                <div>
+                    <button id="findQuoteBtn">Search</button>
+                    <button id="randomVerseBtn">Random Verse</button>
+                </div>
+            </div>
 
-            <input type="checkbox" id="semantic" name="semantic">
-            <label for="semantic">Semantic</label>
-            <span class="tooltip-icon" data-tooltip="Use AI to find semantically similar verses (may be slower)">?</span>
+            <div class="form-group-box">
+                <div>
+                    <label for="findText">Find text:</label>
+                    <input type="text" id="findText" placeholder="Enter text to find" value="<%= locals.searchText || '' %>"/>
+                    <button id="findButton">Find</button>
+                </div>
+                <div class="search-flags">
+                    <div>
+                        <input type="checkbox" id="caseInsensitive" name="caseInsensitive">
+                        <label for="caseInsensitive">Case insensitive</label>
+                        <span class="tooltip-icon" data-tooltip="Match text regardless of upper/lower case (e.g., 'house' matches 'House' and 'house')">?</span>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="wholeWords" name="wholeWords">
+                        <label for="wholeWords">Whole words</label>
+                        <span class="tooltip-icon" data-tooltip="Match complete words only (e.g., 'hold' won't match 'behold')">?</span>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="flexible" name="flexible">
+                        <label for="flexible">Flexible</label>
+                        <span class="tooltip-icon" data-tooltip="Use fuzzy matching to find similar words (handles typos and variations)">?</span>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="semantic" name="semantic">
+                        <label for="semantic">Semantic</label>
+                        <span class="tooltip-icon" data-tooltip="Use AI to find semantically similar verses (may be slower)">?</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <div class="form-group-box" style="margin-top: 12px; margin-bottom: 4px; display: inline-block;">
+            <div class="version-row">
+                <select name="version1" id="version">
+                    <% bibles.forEach(function(bible) { %>
+                        <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                    <% }); %>
+                </select>
+                <select name="version2" id="version2">
+                    <option value="" selected disabled>Select a version</option>
+                    <% bibles.forEach(function(bible) { %>
+                        <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                    <% }); %>
+                </select>
+                <select name="version3" id="version3">
+                    <option value="" selected disabled>Select a version</option>
+                    <% bibles.forEach(function(bible) { %>
+                        <option value="<%= bible.code %>"><%= bible.name %> <%= bible.local ? '[local]' : '' %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="version-row">
+                <label><input type="checkbox" id="parallelLines" name="parallelLines" <% if (locals.parallelLines) { %>checked<% } %>> Parallel lines</label>
+                <label><input type="checkbox" id="sideBySide" name="sideBySide" <% if (locals.sideBySide) { %>checked<% } %>> Side-by-side</label>
+            </div>
+        </div>
     </div>
     <hr>
     <div id="citation"></div>
+    <% if (locals.sideBySideResults && locals.sideBySideResults.length > 0) { %>
+    <div id="sideBySideContainer" style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <% sideBySideResults.forEach(function(item) { %>
+        <div style="flex: 1; min-width: 250px; border-left: 2px solid #ccc; padding-left: 12px;">
+            <pre style="white-space: pre-wrap; font-family: inherit;"><%= item.text %></pre>
+        </div>
+        <% }); %>
+    </div>
+    <% } %>
 
     <footer class="collapsible-content" style="text-align: left;">
         <p>A WebUI<% if (process.env.GIT_VERSION) { %> (version: <%= process.env.GIT_VERSION %>) <% } %> for <a href="https://github.com/maxlit/grepbible" target="_blank">grepbible</a><% if (process.env.PKG_VERSION) { %> v<%= process.env.PKG_VERSION %><% } %> CLI tool.</p>
