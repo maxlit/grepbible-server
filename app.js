@@ -180,7 +180,8 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
 app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
     const { version, book, chapter, verses } = req.params;
     const parallelLines = req.query.parallel === 'true';
-    const sideBySide = req.query.sidebyside === 'true';
+    const sideBySide = req.query.sidebyside !== 'false';
+    const showLineNumbers = req.query.lines === 'true';
 
     let query = `${book} ${chapter}`;
     if (verses) {
@@ -193,7 +194,6 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
         // Fetch each version separately for side-by-side display
         let completed = 0;
         const sideBySideResults = new Array(versions.length);
-        let hasError = false;
 
         versions.forEach((v, i) => {
             executeGbib(query, [v], (result) => {
@@ -214,6 +214,7 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
                         BOOK2CHAPTERS,
                         parallelLines,
                         sideBySide,
+                        showLineNumbers,
                         sideBySideResults
                     });
                 }

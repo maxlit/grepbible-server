@@ -452,6 +452,7 @@
                 const postData = getVersions();
                 const parallelLines = $('#parallelLines').is(':checked');
                 const sideBySide = $('#sideBySide').is(':checked');
+                const showLineNumbers = $('#showLineNumbers').is(':checked');
 
                 $.post(originalBasePath + '/search', { ...postData, parallelLines }, function(data) {
                     if(data.redirectUrl) {
@@ -464,6 +465,7 @@
                         const params = [];
                         if (parallelLines) params.push('parallel=true');
                         if (sideBySide) params.push('sidebyside=true');
+                        if (showLineNumbers) params.push('lines=true');
                         if (params.length) {
                             redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + params.join('&');
                         }
@@ -621,12 +623,18 @@
                 } else {
                     searchParams.delete('sidebyside');
                 }
+                if ($('#showLineNumbers').is(':checked')) {
+                    searchParams.set('lines', 'true');
+                } else {
+                    searchParams.delete('lines');
+                }
 
                 window.location.href = newUrl + (searchParams.toString() ? '?' + searchParams.toString() : '');
             }
 
             $('#parallelLines').change(reloadWithDisplayParams);
             $('#sideBySide').change(reloadWithDisplayParams);
+            $('#showLineNumbers').change(reloadWithDisplayParams);
 
             $('#flexible').change(function() {
                 const isFlexible = $(this).is(':checked');
@@ -741,20 +749,34 @@
             </div>
             <div class="version-row">
                 <label><input type="checkbox" id="parallelLines" name="parallelLines" <% if (locals.parallelLines) { %>checked<% } %>> Parallel lines</label>
-                <label><input type="checkbox" id="sideBySide" name="sideBySide" <% if (locals.sideBySide) { %>checked<% } %>> Side-by-side</label>
+                <label><input type="checkbox" id="sideBySide" name="sideBySide" <% if (!locals.hasOwnProperty('sideBySide') || locals.sideBySide) { %>checked<% } %>> Side-by-side</label>
+                <label><input type="checkbox" id="showLineNumbers" name="showLineNumbers" <% if (locals.showLineNumbers) { %>checked<% } %>> Line numbers</label>
             </div>
         </div>
     </div>
     <hr>
     <div id="citation"></div>
     <% if (locals.sideBySideResults && locals.sideBySideResults.length > 0) { %>
-    <div id="sideBySideContainer" style="display: flex; gap: 20px; flex-wrap: wrap;">
-        <% sideBySideResults.forEach(function(item) { %>
-        <div style="flex: 1; min-width: 250px; border-left: 2px solid #ccc; padding-left: 12px;">
-            <pre style="white-space: pre-wrap; font-family: inherit;"><%= item.text %></pre>
-        </div>
-        <% }); %>
-    </div>
+    <%
+        var versionLines = sideBySideResults.map(function(item) {
+            return item.text.split('\n').filter(function(l) { return l.length > 0; });
+        });
+        var maxLines = Math.max.apply(null, versionLines.map(function(l) { return l.length; }));
+    %>
+    <table id="sideBySideContainer" style="width: 100%; border-collapse: collapse;">
+        <tbody>
+        <% for (var i = 0; i < maxLines; i++) { %>
+            <tr style="vertical-align: top;">
+                <% if (locals.showLineNumbers) { %>
+                <td style="padding: 4px 8px 4px 0; color: #999; white-space: nowrap; border-bottom: 1px solid #eee;"><%= i + 1 %></td>
+                <% } %>
+                <% versionLines.forEach(function(lines, vi) { %>
+                <td style="padding: 4px 12px; border-left: 2px solid #ccc; border-bottom: 1px solid #eee;"><%= lines[i] || '' %></td>
+                <% }); %>
+            </tr>
+        <% } %>
+        </tbody>
+    </table>
     <% } %>
 
     <footer class="collapsible-content" style="text-align: left;">
