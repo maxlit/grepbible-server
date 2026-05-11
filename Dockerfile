@@ -1,5 +1,5 @@
 # Use a base image that includes both Node.js and Python
-FROM nikolaik/python-nodejs:python3.9-nodejs16
+FROM nikolaik/python-nodejs:python3.13-nodejs18
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -20,7 +20,7 @@ RUN apt-get update && \
     gcc \
     g++ \
     && \
-    pip install --no-cache-dir torch==2.6.0+cpu torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir grepbible[ml] && \
     apt-get remove -y build-essential gcc g++ && \
     apt-mark manual libgomp1 && \
@@ -34,11 +34,6 @@ RUN mkdir -p /root/grepbible_data
 # Set environment variables
 ENV LOCAL_BIBLE_DIR=/root/grepbible_data
 ENV PATH="${PATH}:/root/.local/bin"
-
-# Debug: verify ML dependencies are importable
-RUN python -c "import torch; print('torch OK')" && \
-    python -c "import sentence_transformers; print('sentence_transformers OK')" && \
-    pip list | grep -i -E "torch|sentence|grepbible"
 
 # Download Bibles and build RAG index in one layer
 RUN gbib -d kj,vg,de,pl,ru,he && \
