@@ -23,6 +23,7 @@ RUN apt-get update && \
     pip install --no-cache-dir torch==2.1.0+cpu torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir grepbible[ml] && \
     apt-get remove -y build-essential gcc g++ && \
+    apt-mark manual libgomp1 && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
