@@ -10,6 +10,9 @@ COPY package*.json ./
 # Install Node.js dependencies (production only)
 RUN npm ci --only=production && npm cache clean --force
 
+# Remove stale Yarn repo that causes GPG errors
+RUN rm -f /etc/apt/sources.list.d/yarn.list
+
 # Install build tools only temporarily, then clean up in same layer
 RUN apt-get update && \
     apt-get install -y \
