@@ -35,6 +35,11 @@ RUN mkdir -p /root/grepbible_data
 ENV LOCAL_BIBLE_DIR=/root/grepbible_data
 ENV PATH="${PATH}:/root/.local/bin"
 
+# Debug: verify ML dependencies are importable
+RUN python -c "import torch; print('torch OK')" && \
+    python -c "import sentence_transformers; print('sentence_transformers OK')" && \
+    pip list | grep -i -E "torch|sentence|grepbible"
+
 # Download Bibles and build RAG index in one layer
 RUN gbib -d kj,vg,de,pl,ru,he && \
     gbib --rag
