@@ -200,6 +200,32 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+        .verse-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .verse-nav a {
+            display: inline-block;
+            padding: 2px 8px;
+            text-decoration: none;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .verse-nav a:hover {
+            background: #eee;
+        }
+
+        .verse-nav .nav-label {
+            color: #666;
+            font-size: 13px;
+        }
     </style>
     <title>grepbible WebUI</title>
     <!-- Attempt to load jQuery from a CDN -->
@@ -755,6 +781,72 @@
         </div>
     </div>
     <hr>
+    <% if (locals.nav && locals.nav.book) {
+        var versionsStr = (locals.versions || ['kj']).join(',');
+        var qp = '';
+        var sp = new Array();
+        if (locals.parallelLines) sp.push('parallel=true');
+        if (locals.sideBySide) sp.push('sidebyside=true');
+        else if (locals.hasOwnProperty('sideBySide')) sp.push('sidebyside=false');
+        if (locals.showLineNumbers) sp.push('lines=true');
+        if (sp.length) qp = '?' + sp.join('&');
+        var maxChapter = BOOK2CHAPTERS[nav.book] || 1;
+
+        var rangeMatch = nav.verses ? nav.verses.match(/^(\d+)-(\d+)$/) : null;
+        var totalV = nav.totalVerses || 0;
+
+        if (rangeMatch) {
+            // Range navigation
+            var rStart = parseInt(rangeMatch[1]);
+            var rEnd = parseInt(rangeMatch[2]);
+            var rSize = rEnd - rStart + 1;
+            var prevStart = Math.max(1, rStart - rSize);
+            var prevEnd = prevStart + rSize - 1;
+            var nextStart = rEnd + 1;
+            var nextEnd = Math.min(totalV, nextStart + rSize - 1);
+            var lastStart = Math.max(1, totalV - rSize + 1);
+    %>
+    <div class="verse-nav">
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/1-<%= rSize %><%= qp %>">&laquo;</a>
+        <% if (rStart > 1) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/<%= prevStart %>-<%= prevEnd %><%= qp %>">&lsaquo;</a>
+        <% } %>
+        <span class="nav-label"><%= nav.book %> <%= nav.chapter %>:<%= rStart %>-<%= rEnd %></span>
+        <% if (rEnd < totalV) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/<%= nextStart %>-<%= nextEnd %><%= qp %>">&rsaquo;</a>
+        <% } %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/<%= lastStart %>-<%= totalV %><%= qp %>">&raquo;</a>
+    </div>
+    <% } else if (nav.verses && /^\d+$/.test(nav.verses)) {
+            // Single verse navigation
+            var v = parseInt(nav.verses);
+    %>
+    <div class="verse-nav">
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/1<%= qp %>">&laquo;</a>
+        <% if (v > 1) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/<%= v - 1 %><%= qp %>">&lsaquo;</a>
+        <% } else if (nav.chapter > 1) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter - 1 %><%= qp %>">&lsaquo; ch</a>
+        <% } %>
+        <span class="nav-label"><%= nav.book %> <%= nav.chapter %>:<%= v %></span>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %>/<%= v + 1 %><%= qp %>">&rsaquo;</a>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter %><%= qp %>">&raquo;</a>
+    </div>
+    <% } else if (!nav.verses) {
+            // Chapter navigation (no verse selected)
+    %>
+    <div class="verse-nav">
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/1<%= qp %>">&laquo;</a>
+        <% if (nav.chapter > 1) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter - 1 %><%= qp %>">&lsaquo;</a>
+        <% } %>
+        <span class="nav-label"><%= nav.book %> <%= nav.chapter %></span>
+        <% if (nav.chapter < maxChapter) { %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= nav.chapter + 1 %><%= qp %>">&rsaquo;</a>
+        <% } %>
+        <a href="<%= basePath %>/q/<%= versionsStr %>/<%= nav.book %>/<%= maxChapter %><%= qp %>">&raquo;</a>
+    </div>
+    <% } } %>
     <div id="citation"></div>
     <% if (locals.sideBySideResults && locals.sideBySideResults.length > 0) { %>
     <%

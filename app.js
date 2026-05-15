@@ -97,6 +97,18 @@ function executeGbib(query, versions, callback, options = {}) {
     });
 }
 
+function countVersesInChapter(book, chapter, version) {
+    return new Promise((resolve) => {
+        exec(`gbib -c '${book} ${chapter}' -v ${version}`, (error, stdout) => {
+            if (error) {
+                resolve(0);
+            } else {
+                resolve(stdout.trim().split('\n').filter(l => l.length > 0).length);
+            }
+        });
+    });
+}
+
 // Fetch the available bibles list once at the start
 updateAvailableBibles();
 
@@ -177,7 +189,7 @@ app.get(`/api/q/:version/:book/:chapter/:verses?`, (req, res) => {
 });
 
 // New GET endpoint for search functionality
-app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
+app.get(`/q/:version/:book/:chapter/:verses?`, async (req, res) => {
     const { version, book, chapter, verses } = req.params;
     const parallelLines = req.query.parallel === 'true';
     const sideBySide = req.query.sidebyside !== 'false';
@@ -189,6 +201,10 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
     }
 
     const versions = version.split(',');
+
+    // Navigation data for the template
+    const totalVerses = await countVersesInChapter(book, chapter, versions[0]);
+    const nav = { book, chapter: parseInt(chapter), verses: verses || null, totalVerses };
 
     if (sideBySide && versions.length > 1) {
         // Fetch each version separately for side-by-side display
@@ -215,7 +231,8 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
                         parallelLines,
                         sideBySide,
                         showLineNumbers,
-                        sideBySideResults
+                        sideBySideResults,
+                        nav
                     });
                 }
             });
@@ -230,7 +247,8 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
                     results: result.error,
                     reference: '',
                     versions: versions,
-                    BOOK2CHAPTERS
+                    BOOK2CHAPTERS,
+                    nav
                 });
             } else {
                 res.render('index', {
@@ -240,7 +258,8 @@ app.get(`/q/:version/:book/:chapter/:verses?`, (req, res) => {
                     reference: query,
                     versions: versions,
                     BOOK2CHAPTERS,
-                    parallelLines  // Pass the parallel state to the template
+                    parallelLines,
+                    nav
                 });
             }
         }, { parallelLines });
