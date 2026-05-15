@@ -10,6 +10,30 @@ const BOOK2CHAPTERS = require('./src/scripts/constants.js');
 const logger = require('./src/utils/logger');
 require('dotenv').config();
 
+// Simple TTL cache for search results
+const searchCache = new Map();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_MAX_SIZE = 500;
+
+function cacheGet(key) {
+    const entry = searchCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.time > CACHE_TTL) {
+        searchCache.delete(key);
+        return null;
+    }
+    return entry.value;
+}
+
+function cacheSet(key, value) {
+    // Evict oldest entries if at capacity
+    if (searchCache.size >= CACHE_MAX_SIZE) {
+        const oldest = searchCache.keys().next().value;
+        searchCache.delete(oldest);
+    }
+    searchCache.set(key, { value, time: Date.now() });
+}
+
 app.use(cors());
 app.use(express.json());
 app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
@@ -306,14 +330,22 @@ app.post('/search-text', (req, res) => {
   const flexible = req.body.flexible === true || req.body.flexible === 'true';
   const semantic = req.body.semantic === true || req.body.semantic === 'true';
 
+  // Build cache key from all search parameters
+  const cacheKey = JSON.stringify({ query, version, caseInsensitive, wholeWords, flexible, semantic });
+  const cached = cacheGet(cacheKey);
+  if (cached) {
+    logger.info(`Cache hit for search: ${query}`);
+    return res.json(cached);
+  }
+
   if (semantic) {
     if (activeSemanticSearchCount >= MAX_SEMANTIC_SEARCHES) {
-        return res.status(503).json({ 
-            error: 'Semantic search is temporarily overloaded. Please try again in a few minutes.' 
+        return res.status(503).json({
+            error: 'Semantic search is temporarily overloaded. Please try again in a few minutes.'
         });
     }
     activeSemanticSearchCount++;
-    
+
     // Set a timeout to prevent stuck searches
     const searchTimeout = setTimeout(() => {
         activeSemanticSearchCount--;
@@ -321,27 +353,26 @@ app.post('/search-text', (req, res) => {
             res.status(504).json({ error: "Semantic search timed out. Please try again." });
         }
     }, 120000); // 2 minute timeout
-    
+
     // Use gbib with RAG for semantic search
     exec(`gbib -s "${query}" -v ${version} --rag --grep`, (error, stdout, stderr) => {
       try {
         clearTimeout(searchTimeout); // Clear timeout if search completes normally
         if (error) {
           logger.error(`exec error: ${error}`);
-          // Check if the error message contains FileNotFoundError for RAG index
           if (stderr && stderr.includes('FileNotFoundError: No RAG index found')) {
             return res.status(400).json({ error: `Semantic search is not available for the '${version}' version. Please try with a different version or use regular search.` });
           }
           return res.status(500).json({ error: "Error performing semantic search." });
         }
-        res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+        const result = { results: processGrepOutput(stdout, version, req) || "No results found." };
+        cacheSet(cacheKey, result);
+        res.json(result);
       } finally {
-        // Always decrease the counter, even if there was an error
         activeSemanticSearchCount--;
       }
     });
   } else if (flexible) {
-    // Existing flexible search code
     exec(`gbib -s "${query}" -v ${version} --grep`, (error, stdout, stderr) => {
       if (error) {
         logger.error(`exec error: ${error}`);
@@ -351,7 +382,9 @@ app.post('/search-text', (req, res) => {
         logger.error(`stderr: ${stderr}`);
         return res.json({ error: "Error performing search." });
       }
-      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+      const result = { results: processGrepOutput(stdout, version, req) || "No results found." };
+      cacheSet(cacheKey, result);
+      res.json(result);
     });
   } else {
     // Original grep-based search
@@ -378,7 +411,9 @@ app.post('/search-text', (req, res) => {
         logger.error(`stderr: ${stderr}`);
         return res.json({ error: "Error performing search." });
       }
-      res.json({ results: processGrepOutput(stdout, version, req) || "No results found." });
+      const result = { results: processGrepOutput(stdout, version, req) || "No results found." };
+      cacheSet(cacheKey, result);
+      res.json(result);
     });
   }
 });
